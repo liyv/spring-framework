@@ -46,6 +46,18 @@ public class XmlReaderContext extends ReaderContext {
 
 	private final XmlBeanDefinitionReader reader;
 
+	//NamespaceHandlerResolver
+	// using mappings {http://www.springframework.org/schema/aop=org.springframework.aop.config.AopNamespaceHandler,
+	// http://www.springframework.org/schema/task=org.springframework.scheduling.config.TaskNamespaceHandler,
+	// http://mybatis.org/schema/mybatis-spring=org.mybatis.spring.config.NamespaceHandler,
+	// http://www.springframework.org/schema/lang=org.springframework.scripting.config.LangNamespaceHandler,
+	// http://www.springframework.org/schema/c=org.springframework.beans.factory.xml.SimpleConstructorNamespaceHandler,
+	// http://www.springframework.org/schema/jee=org.springframework.ejb.config.JeeNamespaceHandler,
+	// http://www.springframework.org/schema/cache=org.springframework.cache.config.CacheNamespaceHandler,
+	// http://www.springframework.org/schema/p=org.springframework.beans.factory.xml.SimplePropertyNamespaceHandler,
+	// http://www.springframework.org/schema/util=org.springframework.beans.factory.xml.UtilNamespaceHandler,
+	// http://www.springframework.org/schema/context=org.springframework.context.config.ContextNamespaceHandler,
+	// http://www.springframework.org/schema/mvc=org.springframework.web.servlet.config.MvcNamespaceHandler}
 	private final NamespaceHandlerResolver namespaceHandlerResolver;
 
 

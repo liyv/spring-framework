@@ -430,6 +430,7 @@ public class BeanDefinitionParserDelegate {
 			}
 		}
 
+		//作用？？？
 		if (containingBean == null) {
 			checkNameUniqueness(beanName, aliases, ele);
 		}
@@ -1383,6 +1384,8 @@ public class BeanDefinitionParserDelegate {
 		if (namespaceUri == null) {
 			return null;
 		}
+		//namespaceUri =http://www.springframework.org/schema/mvc handler = MvcNamespaceHandler
+		//namespaceUri =  http://www.springframework.org/schema/context=org.springframework.context.config.ContextNamespaceHandler
 		NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
 		if (handler == null) {
 			error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);

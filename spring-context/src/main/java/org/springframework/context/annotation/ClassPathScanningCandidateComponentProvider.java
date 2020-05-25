@@ -93,6 +93,8 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	private String resourcePattern = DEFAULT_RESOURCE_PATTERN;
 
+	//0: interface org.springframework.stereotype.Component
+	//1: interface javax.annotation.ManagedBean
 	private final List<TypeFilter> includeFilters = new LinkedList<>();
 
 	private final List<TypeFilter> excludeFilters = new LinkedList<>();
@@ -414,8 +416,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	private Set<BeanDefinition> scanCandidateComponents(String basePackage) {
 		Set<BeanDefinition> candidates = new LinkedHashSet<>();
 		try {
+			//classpath*:com/backend/liyv/*/**/*.class
 			String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX +
 					resolveBasePackage(basePackage) + '/' + this.resourcePattern;
+			//getResourcePatternResolver()= XmlWebApplicationContext Root WebApplicationContext, started on Mon Apr 06 12:31:23 CST 2020
+			//resources = packageSearchPath包下的所有 .class
 			Resource[] resources = getResourcePatternResolver().getResources(packageSearchPath);
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
@@ -425,6 +430,8 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				}
 				if (resource.isReadable()) {
 					try {
+						//getMetadataReaderFactory() = CachingMetadataReaderFactory
+						//其1：SimpleMetadataReader
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
 						if (isCandidateComponent(metadataReader)) {
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);

@@ -165,11 +165,16 @@ public class ContextLoader {
 
 	/**
 	 * The root WebApplicationContext instance that this loader manages.
+	 *
+	 * XmlWebApplicationContext？？？
 	 */
 	@Nullable
 	private WebApplicationContext context;
 
-	/** Actual ApplicationContextInitializer instances to apply to the context. */
+	/** Actual ApplicationContextInitializer instances to apply to the context.
+	 *
+	 * Initialize the given application context.
+	 *  */
 	private final List<ApplicationContextInitializer<ConfigurableApplicationContext>> contextInitializers =
 			new ArrayList<>();
 
@@ -286,9 +291,11 @@ public class ContextLoader {
 					if (cwac.getParent() == null) {
 						// The context instance was injected without an explicit parent ->
 						// determine parent for root web application context, if any.
+						//为什么要设置parent context ?纯 web 应用好像不需要设置 parent，所以parent 一般是null
 						ApplicationContext parent = loadParentContext(servletContext);
 						cwac.setParent(parent);
 					}
+
 					configureAndRefreshWebApplicationContext(cwac, servletContext);
 				}
 			}
@@ -329,11 +336,14 @@ public class ContextLoader {
 	 * @see ConfigurableWebApplicationContext
 	 */
 	protected WebApplicationContext createWebApplicationContext(ServletContext sc) {
+		//class org.springframework.web.context.support.XmlWebApplicationContext
 		Class<?> contextClass = determineContextClass(sc);
 		if (!ConfigurableWebApplicationContext.class.isAssignableFrom(contextClass)) {
 			throw new ApplicationContextException("Custom context class [" + contextClass.getName() +
 					"] is not of type [" + ConfigurableWebApplicationContext.class.getName() + "]");
 		}
+		//这里为什么要强转？
+		//因为是反射，不能确定Class 类型
 		return (ConfigurableWebApplicationContext) BeanUtils.instantiateClass(contextClass);
 	}
 
@@ -388,12 +398,14 @@ public class ContextLoader {
 		if (configLocationParam != null) {
 			wac.setConfigLocation(configLocationParam);
 		}
+		//todo:389
 
 		// The wac environment's #initPropertySources will be called in any case when the context
 		// is refreshed; do it eagerly here to ensure servlet property sources are in place for
 		// use in any post-processing or initialization that occurs below prior to #refresh
 		ConfigurableEnvironment env = wac.getEnvironment();
 		if (env instanceof ConfigurableWebEnvironment) {
+			//作用是什么？
 			((ConfigurableWebEnvironment) env).initPropertySources(sc, null);
 		}
 
@@ -415,13 +427,14 @@ public class ContextLoader {
 	 * org.springframework.core.annotation.Order Order} will be sorted appropriately.
 	 * @param sc the current servlet context
 	 * @param wac the newly created application context
-	 * @see #CONTEXT_INITIALIZER_CLASSES_PARAM
+	 * @see #CONTEXT_INITIALIZER_CLASSES_PARAM contextInitializerClasses
 	 * @see ApplicationContextInitializer#initialize(ConfigurableApplicationContext)
 	 */
 	protected void customizeContext(ServletContext sc, ConfigurableWebApplicationContext wac) {
+		// ApplicationContextInitializer 的作用是什么？？？
 		List<Class<ApplicationContextInitializer<ConfigurableApplicationContext>>> initializerClasses =
 				determineContextInitializerClasses(sc);
-
+		//todo:425
 		for (Class<ApplicationContextInitializer<ConfigurableApplicationContext>> initializerClass : initializerClasses) {
 			Class<?> initializerContextClass =
 					GenericTypeResolver.resolveTypeArgument(initializerClass, ApplicationContextInitializer.class);
@@ -434,9 +447,10 @@ public class ContextLoader {
 			}
 			this.contextInitializers.add(BeanUtils.instantiateClass(initializerClass));
 		}
-
+		//给 contextInitializers 排序
 		AnnotationAwareOrderComparator.sort(this.contextInitializers);
 		for (ApplicationContextInitializer<ConfigurableApplicationContext> initializer : this.contextInitializers) {
+			//Initialize the given application context.
 			initializer.initialize(wac);
 		}
 	}

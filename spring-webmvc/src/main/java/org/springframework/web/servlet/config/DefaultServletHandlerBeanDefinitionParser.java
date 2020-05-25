@@ -56,6 +56,7 @@ class DefaultServletHandlerBeanDefinitionParser implements BeanDefinitionParser 
 		if (StringUtils.hasText(defaultServletName)) {
 			defaultServletHandlerDef.getPropertyValues().add("defaultServletName", defaultServletName);
 		}
+		//org.springframework.web.servlet.resource.DefaultServletHttpRequestHandler#0
 		String defaultServletHandlerName = parserContext.getReaderContext().generateBeanName(defaultServletHandlerDef);
 		parserContext.getRegistry().registerBeanDefinition(defaultServletHandlerName, defaultServletHandlerDef);
 		parserContext.registerComponent(new BeanComponentDefinition(defaultServletHandlerDef, defaultServletHandlerName));
@@ -68,6 +69,7 @@ class DefaultServletHandlerBeanDefinitionParser implements BeanDefinitionParser 
 		handlerMappingDef.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
 		handlerMappingDef.getPropertyValues().add("urlMap", urlMap);
 
+		//org.springframework.web.servlet.handler.SimpleUrlHandlerMapping#0
 		String handlerMappingBeanName = parserContext.getReaderContext().generateBeanName(handlerMappingDef);
 		parserContext.getRegistry().registerBeanDefinition(handlerMappingBeanName, handlerMappingDef);
 		parserContext.registerComponent(new BeanComponentDefinition(handlerMappingDef, handlerMappingBeanName));
