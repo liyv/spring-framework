@@ -70,7 +70,9 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	@Nullable
 	private Boolean allowCircularReferences;
 
-	/** Bean factory for this context. */
+	/** Bean factory for this context.
+	 * DefaultListableBeanFactory
+	 *  */
 	@Nullable
 	private DefaultListableBeanFactory beanFactory;
 
@@ -137,6 +139,8 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 			//设置id的作用是什么？？？
 			beanFactory.setSerializationId(getId());
 			customizeBeanFactory(beanFactory);
+			//将加载Bean的任务交给 beanDefinitions Reader
+			//比如： XmlBeanDefinitionReader PropertiesBeanDefinitionReader
 			loadBeanDefinitions(beanFactory);
 			synchronized (this.beanFactoryMonitor) {
 				//DefaultListableBeanFactory

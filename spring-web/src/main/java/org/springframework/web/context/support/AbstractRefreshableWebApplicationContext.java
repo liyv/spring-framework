@@ -94,6 +94,7 @@ public abstract class AbstractRefreshableWebApplicationContext extends AbstractR
 	private String namespace;
 
 	/** the ThemeSource for this ApplicationContext. */
+	//ResourceBundleThemeSource
 	@Nullable
 	private ThemeSource themeSource;
 

@@ -235,6 +235,7 @@ public abstract class WebApplicationContextUtils {
 				Enumeration<?> paramNameEnum = servletContext.getInitParameterNames();
 				while (paramNameEnum.hasMoreElements()) {
 					String paramName = (String) paramNameEnum.nextElement();
+					//contextConfigLocation :  classpath:spring/spring-*.xml
 					parameterMap.put(paramName, servletContext.getInitParameter(paramName));
 				}
 			}

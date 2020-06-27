@@ -148,9 +148,17 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private TypeConverter typeConverter;
 
 	/** String resolvers to apply e.g. to annotation attribute values. */
+	//
 	private final List<StringValueResolver> embeddedValueResolvers = new CopyOnWriteArrayList<>();
 
 	/** BeanPostProcessors to apply in createBean. */
+	/** ApplicationContextAwareProcessor
+	 * ApplicationListenerDetector
+	 * ServletContextAwareProcessor
+	 *ConfigurationClassPostProcessor$ImportAwareBeanPostProcessor
+	 *CommonAnnotationBeanPostProcessor
+	 *AutowiredAnnotationBeanPostProcessor
+	 */
 	private final List<BeanPostProcessor> beanPostProcessors = new CopyOnWriteArrayList<>();
 
 	/** Indicates whether any InstantiationAwareBeanPostProcessors have been registered. */
@@ -160,6 +168,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private volatile boolean hasDestructionAwareBeanPostProcessors;
 
 	/** Map from scope identifier String to corresponding Scope. */
+	/**
+	 *request  RequestScope
+	 *session  SessionScope
+	 * application  ServletContextScope
+	 */
 	private final Map<String, Scope> scopes = new LinkedHashMap<>(8);
 
 	/** Security context used when running with a SecurityManager. */
@@ -167,6 +180,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private SecurityContextProvider securityContextProvider;
 
 	/** Map from bean name to merged RootBeanDefinition. */
+	/**
+	 * mvcContentNegotiationManager  Root bean: class [org.springframework.web.accept.ContentNegotiationManagerFactoryBean]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodName=null; destroyMethodName=null
+	 *
+	 */
 	private final Map<String, RootBeanDefinition> mergedBeanDefinitions = new ConcurrentHashMap<>(256);
 
 	/** Names of beans that have already been created at least once. */
@@ -511,6 +528,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			throws NoSuchBeanDefinitionException {
 
 		String beanName = transformedBeanName(name);
+		//mvcContentNegotiationManager false
 		boolean isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name);
 
 		// Check manually registered singletons.
@@ -570,6 +588,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 
 		// Setup the types that we want to match against
+		//mvcContentNegotiationManager  interface org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor
 		Class<?> classToMatch = typeToMatch.resolve();
 		if (classToMatch == null) {
 			classToMatch = FactoryBean.class;
@@ -584,6 +603,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// We're looking for a regular reference but we're a factory bean that has
 		// a decorated bean definition. The target bean should be the same type
 		// as FactoryBean would ultimately return.
+		//mvcContentNegotiationManager false
 		if (!isFactoryDereference && dbd != null && isFactoryBean(beanName, mbd)) {
 			// We should only attempt if the user explicitly set lazy-init to true
 			// and we know the merged bean definition is for a factory bean.
@@ -920,9 +940,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// Remove from old position, if any
 		this.beanPostProcessors.remove(beanPostProcessor);
 		// Track whether it is instantiation/destruction aware
+		//beanPostProcessor : ApplicationContextAwareProcessor false
+		// 					ApplicationListenerDetector false
 		if (beanPostProcessor instanceof InstantiationAwareBeanPostProcessor) {
 			this.hasInstantiationAwareBeanPostProcessors = true;
 		}
+		//ApplicationContextAwareProcessor false
+		//ApplicationListenerDetector  true
 		if (beanPostProcessor instanceof DestructionAwareBeanPostProcessor) {
 			this.hasDestructionAwareBeanPostProcessors = true;
 		}
@@ -1596,6 +1620,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 	/**
 	 * Check whether the given bean is defined as a {@link FactoryBean}.
+	 * FactoryBean  和 BeanFactory 的区别
 	 * @param beanName the name of the bean
 	 * @param mbd the corresponding bean definition
 	 */

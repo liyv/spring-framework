@@ -280,6 +280,8 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 
 		// Return immediately if no @Configuration classes were found
+		//找到有注解的类 demoController 和 contextHierarchyServiceImpl 这是我自己写的类@Controller 和@Service
+		//todo: ConfigurationClassUtils.checkConfigurationClassCandidate 还得继续看下
 		if (configCandidates.isEmpty()) {
 			return;
 		}
@@ -306,7 +308,7 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 				}
 			}
 		}
-
+		//StandardServletEnvironment
 		if (this.environment == null) {
 			this.environment = new StandardEnvironment();
 		}

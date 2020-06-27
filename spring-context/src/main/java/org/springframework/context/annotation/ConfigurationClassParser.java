@@ -134,6 +134,10 @@ class ConfigurationClassParser {
 
 	private final ConditionEvaluator conditionEvaluator;
 
+	/**
+	 * ConfigurationClass: beanName 'demoController', com.backend.liyv.controller.DemoController :ConfigurationClass: beanName 'demoController', com.backend.liyv.controller.DemoController
+	 * ConfigurationClass: beanName 'contextHierarchyServiceImpl', com.backend.liyv.service.impl.ContextHierarchyServiceImpl : ConfigurationClass: beanName 'contextHierarchyServiceImpl', com.backend.liyv.service.impl.ContextHierarchyServiceImpl
+	 */
 	private final Map<ConfigurationClass, ConfigurationClass> configurationClasses = new LinkedHashMap<>();
 
 	private final Map<String, ConfigurationClass> knownSuperclasses = new HashMap<>();
@@ -212,6 +216,7 @@ class ConfigurationClassParser {
 	 */
 	public void validate() {
 		for (ConfigurationClass configClass : this.configurationClasses.keySet()) {
+			//FailFastProblemReporter
 			configClass.validate(this.problemReporter);
 		}
 	}

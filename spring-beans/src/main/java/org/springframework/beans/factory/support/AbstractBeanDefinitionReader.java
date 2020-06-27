@@ -51,8 +51,12 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	/** Logger available to subclasses. */
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	//DefaultListableBeanFactory
 	private final BeanDefinitionRegistry registry;
 
+	//PathMatchingResourcePatternResolver
+	//XmlWebApplicationContext
+	//是哪个？
 	@Nullable
 	private ResourceLoader resourceLoader;
 
@@ -211,6 +215,7 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	 * @see #loadBeanDefinitions(org.springframework.core.io.Resource[])
 	 */
 	public int loadBeanDefinitions(String location, @Nullable Set<Resource> actualResources) throws BeanDefinitionStoreException {
+		//PathMatchingResourcePatternResolver ?
 		ResourceLoader resourceLoader = getResourceLoader();
 		if (resourceLoader == null) {
 			throw new BeanDefinitionStoreException(

@@ -173,6 +173,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	private ApplicationContext parent;
 
 	/** Environment used by this context. */
+	/**
+	 * StandardServletEnvironment
+	 */
 	@Nullable
 	private ConfigurableEnvironment environment;
 
@@ -204,10 +207,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	private LifecycleProcessor lifecycleProcessor;
 
 	/** MessageSource we delegate our implementation of this interface to. */
+	//DelegatingMessageSource
 	@Nullable
 	private MessageSource messageSource;
 
 	/** Helper class used in event publishing. */
+	//SimpleApplicationEventMulticaster
 	@Nullable
 	private ApplicationEventMulticaster applicationEventMulticaster;
 
@@ -660,10 +665,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		//DefaultListableBeanFactory
 		// Tell the internal bean factory to use the context's class loader etc.
+		//ParallelWebappClassLoader
 		beanFactory.setBeanClassLoader(getClassLoader());
 		beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));
 		beanFactory.addPropertyEditorRegistrar(new ResourceEditorRegistrar(this, getEnvironment()));
 
+		//this: XmlWebApplicationContext
 		// Configure the bean factory with context callbacks.
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 		//忽略给定接口的自动装配？
@@ -698,9 +705,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		if (!beanFactory.containsLocalBean(ENVIRONMENT_BEAN_NAME)) {
 			beanFactory.registerSingleton(ENVIRONMENT_BEAN_NAME, getEnvironment());
 		}
+		//SystemProperties
 		if (!beanFactory.containsLocalBean(SYSTEM_PROPERTIES_BEAN_NAME)) {
 			beanFactory.registerSingleton(SYSTEM_PROPERTIES_BEAN_NAME, getEnvironment().getSystemProperties());
 		}
+		//systemenvironment 和 systemProperties的区别？？？
 		if (!beanFactory.containsLocalBean(SYSTEM_ENVIRONMENT_BEAN_NAME)) {
 			beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, getEnvironment().getSystemEnvironment());
 		}

@@ -160,9 +160,19 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	private AutowireCandidateResolver autowireCandidateResolver = new SimpleAutowireCandidateResolver();
 
 	/** Map from dependency type to corresponding autowired value. */
+	/**interface org.springframework.beans.factory.BeanFactory : DefaultListableBeanFactory
+	 *interface org.springframework.core.io.ResourceLoader   XmlWebApplicationContext  Root WebApplicationContext, started on Fri Jun 26 13:55:47 CST 2020
+	 *interface org.springframework.context.ApplicationEventPublisher  XmlWebApplicationContext
+	 *interface org.springframework.context.ApplicationContext  	XmlWebApplicationContext
+	 *interface javax.servlet.ServletRequest  						RequestObjectFactory
+	 *interface javax.servlet.ServletResponse  						ResponseObjectFactory
+	 * interface javax.servlet.http.HttpSession 					SessionObjectFactory
+	 *interface org.springframework.web.context.request.WebRequest   WebRequestObjectFactory
+	 */
 	private final Map<Class<?>, Object> resolvableDependencies = new ConcurrentHashMap<>(16);
 
 	/** Map of bean definition objects, keyed by bean name. */
+	//存放了多少个？？？
 	private final Map<String, BeanDefinition> beanDefinitionMap = new ConcurrentHashMap<>(256);
 
 	/** Map of singleton and non-singleton bean names, keyed by dependency type. */
@@ -520,19 +530,26 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					if (!mbd.isAbstract() && (allowEagerInit ||
 							(mbd.hasBeanClass() || !mbd.isLazyInit() || isAllowEagerClassLoading()) &&
 									!requiresEagerInitForType(mbd.getFactoryBeanName()))) {
+						//怎么理解 FactoryBean ?
+						//mvcContentNegotiationManager  true
+						//RequestMappingHandlerMapping  false
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
 						BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 						boolean matchFound = false;
+						//mvcContentNegotiationManager false
+						//RequestMappingHandlerMapping false
 						boolean allowFactoryBeanInit = allowEagerInit || containsSingleton(beanName);
 						boolean isNonLazyDecorated = dbd != null && !mbd.isLazyInit();
 						if (!isFactoryBean) {
 							if (includeNonSingletons || isSingleton(beanName, mbd, dbd)) {
+								//RequestMappingHandlerMapping false
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
 						}
 						else  {
 							if (includeNonSingletons || isNonLazyDecorated ||
 									(allowFactoryBeanInit && isSingleton(beanName, mbd, dbd))) {
+								//mvcContentNegotiationManager false
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
 							if (!matchFound) {
