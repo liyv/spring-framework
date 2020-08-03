@@ -162,7 +162,7 @@ public class UriComponentsBuilder implements UriBuilder, Cloneable {
 		this.port = other.port;
 		this.pathBuilder = other.pathBuilder.cloneBuilder();
 		this.uriVariables.putAll(other.uriVariables);
-		this.queryParams.putAll(other.queryParams);
+		this.queryParams.addAll(other.queryParams);
 		this.fragment = other.fragment;
 		this.encodeTemplate = other.encodeTemplate;
 		this.charset = other.charset;
@@ -236,13 +236,16 @@ public class UriComponentsBuilder implements UriBuilder, Cloneable {
 			}
 			builder.scheme(scheme);
 			if (opaque) {
-				String ssp = uri.substring(scheme.length()).substring(1);
+				String ssp = uri.substring(scheme.length() + 1);
 				if (StringUtils.hasLength(fragment)) {
 					ssp = ssp.substring(0, ssp.length() - (fragment.length() + 1));
 				}
 				builder.schemeSpecificPart(ssp);
 			}
 			else {
+				if (StringUtils.hasLength(scheme) && !StringUtils.hasLength(host)) {
+					throw new IllegalArgumentException("[" + uri + "] is not a valid URI");
+				}
 				builder.userInfo(userInfo);
 				builder.host(host);
 				if (StringUtils.hasLength(port)) {

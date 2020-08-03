@@ -78,6 +78,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.metrics.ApplicationStartup;
+import org.springframework.core.metrics.StartupStep;
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
@@ -119,6 +121,7 @@ import org.springframework.util.ReflectionUtils;
  * @author Stephane Nicoll
  * @author Sam Brannen
  * @author Sebastien Deleuze
+ * @author Brian Clozel
  * @since January 21, 2001
  * @see #refreshBeanFactory
  * @see #getBeanFactory
@@ -232,6 +235,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	//SimpleApplicationEventMulticaster
 	@Nullable
 	private ApplicationEventMulticaster applicationEventMulticaster;
+
+	/** Application startup metrics. **/
+	private ApplicationStartup applicationStartup = ApplicationStartup.DEFAULT;
 
 	/** Statically specified listeners. */
 	private final Set<ApplicationListener<?>> applicationListeners = new LinkedHashSet<>();
@@ -450,6 +456,17 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		return this.applicationEventMulticaster;
 	}
 
+	@Override
+	public void setApplicationStartup(ApplicationStartup applicationStartup) {
+		Assert.notNull(applicationStartup, "applicationStartup should not be null");
+		this.applicationStartup = applicationStartup;
+	}
+
+	@Override
+	public ApplicationStartup getApplicationStartup() {
+		return this.applicationStartup;
+	}
+
 	/**
 	 * Return the internal LifecycleProcessor used by the context.
 	 * @return the internal LifecycleProcessor (never {@code null})
@@ -539,6 +556,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
+			StartupStep contextRefresh = this.applicationStartup.start("spring.context.refresh");
+
 			// Prepare this context for refreshing.
 			prepareRefresh();
 
@@ -559,6 +578,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//-->AbstractRefreshableWebApplicationContext
 				postProcessBeanFactory(beanFactory);
 
+				StartupStep beanPostProcess = this.applicationStartup.start("spring.context.beans.post-process");
 				//BeanFactoryPostProcessor
 				// Invoke factory processors registered as beans in the context.
 				invokeBeanFactoryPostProcessors(beanFactory);
@@ -566,6 +586,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//BeanPostProcessor
 				// Register bean processors that intercept bean creation.
 				registerBeanPostProcessors(beanFactory);
+				beanPostProcess.end();
 
 				//message source 是什么？？？
 				// Initialize message source for this context.
@@ -608,6 +629,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Reset common introspection caches in Spring's core, since we
 				// might not ever need metadata for singleton beans anymore...
 				resetCommonCaches();
+				contextRefresh.end();
 			}
 		}
 	}
@@ -699,6 +721,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.ignoreDependencyInterface(ApplicationEventPublisherAware.class);
 		beanFactory.ignoreDependencyInterface(MessageSourceAware.class);
 		beanFactory.ignoreDependencyInterface(ApplicationContextAware.class);
+		beanFactory.ignoreDependencyInterface(ApplicationStartup.class);
 
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
@@ -732,6 +755,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			beanFactory.registerSingleton(SYSTEM_ENVIRONMENT_BEAN_NAME, getEnvironment().getSystemEnvironment());
 		}
 		//System properties 和 System environment 的区别是什么？？？
+		if (!beanFactory.containsLocalBean(APPLICATION_STARTUP_BEAN_NAME)) {
+			beanFactory.registerSingleton(APPLICATION_STARTUP_BEAN_NAME, getApplicationStartup());
+		}
 	}
 
 	/**
@@ -755,7 +781,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime
 		// (e.g. through an @Bean method registered by ConfigurationClassPostProcessor)
-		if (beanFactory.getTempClassLoader() == null && beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
+		if (!IN_NATIVE_IMAGE && beanFactory.getTempClassLoader() == null && beanFactory.containsBean(LOAD_TIME_WEAVER_BEAN_NAME)) {
 			beanFactory.addBeanPostProcessor(new LoadTimeWeaverAwareProcessor(beanFactory));
 			beanFactory.setTempClassLoader(new ContextTypeMatchClassLoader(beanFactory.getBeanClassLoader()));
 		}
@@ -818,7 +844,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			}
 		}
 		else {
-			this.applicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
+			SimpleApplicationEventMulticaster simpleApplicationEventMulticaster = new SimpleApplicationEventMulticaster(beanFactory);
+			simpleApplicationEventMulticaster.setApplicationStartup(getApplicationStartup());
+			this.applicationEventMulticaster = simpleApplicationEventMulticaster;
 			beanFactory.registerSingleton(APPLICATION_EVENT_MULTICASTER_BEAN_NAME, this.applicationEventMulticaster);
 			if (logger.isTraceEnabled()) {
 				logger.trace("No '" + APPLICATION_EVENT_MULTICASTER_BEAN_NAME + "' bean, using " +
@@ -945,7 +973,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		publishEvent(new ContextRefreshedEvent(this));
 
 		// Participate in LiveBeansView MBean, if active.
-		LiveBeansView.registerApplicationContext(this);
+		if (!IN_NATIVE_IMAGE) {
+			LiveBeansView.registerApplicationContext(this);
+		}
 	}
 
 	/**
@@ -1053,7 +1083,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				logger.debug("Closing " + this);
 			}
 
-			LiveBeansView.unregisterApplicationContext(this);
+			if (!IN_NATIVE_IMAGE) {
+				LiveBeansView.unregisterApplicationContext(this);
+			}
 
 			try {
 				// Publish shutdown event.

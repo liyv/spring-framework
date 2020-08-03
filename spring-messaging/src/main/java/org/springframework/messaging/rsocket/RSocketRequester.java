@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 import io.rsocket.ConnectionSetupPayload;
 import io.rsocket.Payload;
 import io.rsocket.RSocket;
+import io.rsocket.RSocketClient;
 import io.rsocket.transport.ClientTransport;
 import io.rsocket.transport.netty.client.TcpClientTransport;
 import io.rsocket.transport.netty.client.WebsocketClientTransport;
@@ -48,8 +49,18 @@ import org.springframework.util.MimeType;
 public interface RSocketRequester {
 
 	/**
-	 * Return the underlying sending RSocket.
+	 * Return the underlying {@link RSocketClient} used to make requests with.
+	 * @since 5.3
 	 */
+	RSocketClient rsocketClient();
+
+	/**
+	 * Return the underlying {@link RSocket} if the requester was created with a
+	 * "live" RSocket via {@link #wrap(RSocket, MimeType, MimeType, RSocketStrategies)}
+	 * or via one of the (deprecated) connect methods on the
+	 * {@code RSocketRequester} builder, or otherwise return {@code null}.
+	 */
+	@Nullable
 	RSocket rsocket();
 
 	/**
@@ -96,7 +107,6 @@ public interface RSocketRequester {
 	 */
 	RequestSpec metadata(Object metadata, @Nullable MimeType mimeType);
 
-
 	/**
 	 * Obtain a builder to create a client {@link RSocketRequester} by connecting
 	 * to an RSocket server.
@@ -113,7 +123,7 @@ public interface RSocketRequester {
 			RSocket rsocket, MimeType dataMimeType, MimeType metadataMimeType,
 			RSocketStrategies strategies) {
 
-		return new DefaultRSocketRequester(rsocket, dataMimeType, metadataMimeType, strategies);
+		return new DefaultRSocketRequester(null, rsocket, dataMimeType, metadataMimeType, strategies);
 	}
 
 
@@ -237,27 +247,64 @@ public interface RSocketRequester {
 		RSocketRequester.Builder apply(Consumer<RSocketRequester.Builder> configurer);
 
 		/**
+		 * Build an {@link RSocketRequester} instance for use with a TCP
+		 * transport. Requests are made via {@link io.rsocket.RSocketClient}
+		 * which establishes a shared TCP connection to given host and port.
+		 * @param host the host of the server to connect to
+		 * @param port the port of the server to connect to
+		 * @return the created {@code RSocketRequester}
+		 * @since 5.3
+		 */
+		RSocketRequester tcp(String host, int port);
+
+		/**
+		 * Build an {@link RSocketRequester} instance for use with a WebSocket
+		 * transport. Requests are made via {@link io.rsocket.RSocketClient}
+		 * which establishes a shared WebSocket connection to given URL.
+		 * @param uri the URL of the server to connect to
+		 * @return the created {@code RSocketRequester}
+		 * @since 5.3
+		 */
+		RSocketRequester websocket(URI uri);
+
+		/**
+		 * Build an {@link RSocketRequester} instance for use with the given
+		 * transport. Requests are made via {@link io.rsocket.RSocketClient}
+		 * which establishes a shared connection through the given transport.
+		 * @param transport the transport to use for connecting to the server
+		 * @return the created {@code RSocketRequester}
+		 * @since 5.3
+		 */
+		RSocketRequester transport(ClientTransport transport);
+
+		/**
 		 * Connect to the server over TCP.
 		 * @param host the server host
 		 * @param port the server port
 		 * @return an {@code RSocketRequester} for the connection
+		 * @deprecated as of 5.3 in favor of {@link #tcp(String, int)}
 		 * @see TcpClientTransport
 		 */
+		@Deprecated
 		Mono<RSocketRequester> connectTcp(String host, int port);
 
 		/**
 		 * Connect to the server over WebSocket.
 		 * @param uri the RSocket server endpoint URI
 		 * @return an {@code RSocketRequester} for the connection
+		 * @deprecated as of 5.3 in favor of {@link #websocket(URI)}
 		 * @see WebsocketClientTransport
 		 */
+		@Deprecated
 		Mono<RSocketRequester> connectWebSocket(URI uri);
 
 		/**
 		 * Connect to the server with the given {@code ClientTransport}.
 		 * @param transport the client transport to use
 		 * @return an {@code RSocketRequester} for the connection
+		 * @deprecated as of 5.3 in favor of {@link #transport(ClientTransport)}
 		 */
+		@Deprecated
 		Mono<RSocketRequester> connect(ClientTransport transport);
 
 	}
