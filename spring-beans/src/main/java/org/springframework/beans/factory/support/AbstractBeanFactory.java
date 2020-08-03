@@ -142,6 +142,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private ConversionService conversionService;
 
 	/** Custom PropertyEditorRegistrars to apply to the beans of this factory. */
+	/**
+	 *
+	 * ResourceEditorRegistrar
+	 */
 	private final Set<PropertyEditorRegistrar> propertyEditorRegistrars = new LinkedHashSet<>(4);
 
 	/** Custom PropertyEditors to apply to the beans of this factory. */
@@ -156,7 +160,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	private final List<StringValueResolver> embeddedValueResolvers = new CopyOnWriteArrayList<>();
 
 	/** BeanPostProcessors to apply. */
-	/** ApplicationContextAwareProcessor
+	/**
+	 * 这是事先准备的  BeanPostProcessor？，这些 不在Bean容器的管理内？
+	 * ApplicationContextAwareProcessor
 	 * ApplicationListenerDetector
 	 * ServletContextAwareProcessor
 	 *ConfigurationClassPostProcessor$ImportAwareBeanPostProcessor
@@ -253,7 +259,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param args arguments to use when creating a bean instance using explicit arguments
 	 * (only applied when creating a new instance as opposed to retrieving an existing one)
 	 * @param typeCheckOnly whether the instance is obtained for a type check,
-	 * not for actual use
+	 * not for actual use 只是检查类型？
 	 * @return an instance of the bean
 	 * @throws BeansException if the bean could not be created
 	 */
@@ -327,6 +333,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						}
 						registerDependentBean(dep, beanName);
 						try {
+							//这是把依赖先实例化了吗？
 							getBean(dep);
 						}
 						catch (NoSuchBeanDefinitionException ex) {

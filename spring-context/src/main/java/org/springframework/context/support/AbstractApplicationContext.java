@@ -692,7 +692,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		//this: XmlWebApplicationContext
 		// Configure the bean factory with context callbacks.
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
-		//忽略给定接口的自动装配？
+		//忽略给定接口的自动装配？通过其他途径装配
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
@@ -709,7 +709,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.registerResolvableDependency(ApplicationContext.class, this);
 
 		// Register early post-processor for detecting inner beans as ApplicationListeners.
-		//ApplicationListeners 是什么？？？
+		//ApplicationListeners 是什么？？？内部类是 ApplicationListeners？
 		beanFactory.addBeanPostProcessor(new ApplicationListenerDetector(this));
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found.
