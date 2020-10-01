@@ -198,7 +198,7 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 
 		CompositeComponentDefinition compDefinition = new CompositeComponentDefinition(element.getTagName(), source);
 		context.pushContainingComponent(compDefinition);
-		//其1：mvcContentNegotiationManager
+		//其1：mvcContentNegotiationManager 内容协商，主要是协商url的扩展吗？
 		RuntimeBeanReference contentNegotiationManager = getContentNegotiationManager(element, source, context);
 
 		RootBeanDefinition handlerMappingDef = new RootBeanDefinition(RequestMappingHandlerMapping.class);
@@ -223,7 +223,8 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 		RuntimeBeanReference conversionService = getConversionService(element, source, context);
 		RuntimeBeanReference validator = getValidator(element, source, context);
 		RuntimeBeanReference messageCodesResolver = getMessageCodesResolver(element);
-
+		//initBinder  初始化 WebDataBinder
+		//WebDataBinder 绑定的话，需要转换、验证等
 		RootBeanDefinition bindingDef = new RootBeanDefinition(ConfigurableWebBindingInitializer.class);
 		bindingDef.setSource(source);
 		bindingDef.setRole(BeanDefinition.ROLE_INFRASTRUCTURE);
@@ -233,6 +234,8 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 
 		//有8个converter
 		//messageConverter 是什么
+		//这应该是为 RequestMappingHandlerAdapter 准备的
+		//这个
 		ManagedList<?> messageConverters = getMessageConverters(element, source, context);
 		ManagedList<?> argumentResolvers = getArgumentResolvers(element, context);
 		ManagedList<?> returnValueHandlers = getReturnValueHandlers(element, context);
@@ -318,6 +321,7 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 		defaultExceptionResolver.getPropertyValues().add("order", 2);
 		String defaultExResolverName = readerContext.registerWithGeneratedName(defaultExceptionResolver);
 
+		//这是什么意思
 		context.registerComponent(new BeanComponentDefinition(handlerMappingDef, HANDLER_MAPPING_BEAN_NAME));
 		context.registerComponent(new BeanComponentDefinition(handlerAdapterDef, HANDLER_ADAPTER_BEAN_NAME));
 		context.registerComponent(new BeanComponentDefinition(uriContributorDef, uriContributorName));
