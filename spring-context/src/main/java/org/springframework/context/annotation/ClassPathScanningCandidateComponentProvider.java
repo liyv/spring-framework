@@ -18,9 +18,9 @@ package org.springframework.context.annotation;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -92,12 +92,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	protected final Log logger = LogFactory.getLog(getClass());
 
 	private String resourcePattern = DEFAULT_RESOURCE_PATTERN;
-
 	//0: interface org.springframework.stereotype.Component
 	//1: interface javax.annotation.ManagedBean
-	private final List<TypeFilter> includeFilters = new LinkedList<>();
+	private final List<TypeFilter> includeFilters = new ArrayList<>();
 
-	private final List<TypeFilter> excludeFilters = new LinkedList<>();
+	private final List<TypeFilter> excludeFilters = new ArrayList<>();
 
 	@Nullable
 	private Environment environment;

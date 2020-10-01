@@ -959,6 +959,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * onRefresh() method and publishing the
 	 * {@link org.springframework.context.event.ContextRefreshedEvent}.
 	 */
+	@SuppressWarnings("deprecation")
 	protected void finishRefresh() {
 		// Clear context-level resource caches (such as ASM metadata from scanning).
 		clearResourceCaches();
@@ -1076,6 +1077,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #close()
 	 * @see #registerShutdownHook()
 	 */
+	@SuppressWarnings("deprecation")
 	protected void doClose() {
 		// Check whether an actual close attempt is necessary...
 		if (this.active.get() && this.closed.compareAndSet(false, true)) {
@@ -1290,6 +1292,18 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	@Override
 	public String[] getBeanDefinitionNames() {
 		return getBeanFactory().getBeanDefinitionNames();
+	}
+
+	@Override
+	public <T> ObjectProvider<T> getBeanProvider(Class<T> requiredType, boolean allowEagerInit) {
+		assertBeanFactoryActive();
+		return getBeanFactory().getBeanProvider(requiredType, allowEagerInit);
+	}
+
+	@Override
+	public <T> ObjectProvider<T> getBeanProvider(ResolvableType requiredType, boolean allowEagerInit) {
+		assertBeanFactoryActive();
+		return getBeanFactory().getBeanProvider(requiredType, allowEagerInit);
 	}
 
 	@Override
