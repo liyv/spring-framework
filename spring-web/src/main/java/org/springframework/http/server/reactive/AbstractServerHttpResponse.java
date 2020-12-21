@@ -18,10 +18,10 @@ package org.springframework.http.server.reactive;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 
-import org.apache.commons.logging.Log;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,7 +31,6 @@ import org.springframework.core.io.buffer.DataBufferFactory;
 import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.core.io.buffer.PooledDataBuffer;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpLogging;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.lang.Nullable;
@@ -58,8 +57,6 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	 * the response status and headers.
 	 */
 	private enum State {NEW, COMMITTING, COMMIT_ACTION_FAILED, COMMITTED}
-
-	protected final Log logger = HttpLogging.forLogName(getClass());
 
 
 	private final DataBufferFactory dataBufferFactory;
@@ -215,10 +212,29 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 		// We must resolve value first however, for a chance to handle potential error.
 		if (body instanceof Mono) {
 			return ((Mono<? extends DataBuffer>) body)
-					.flatMap(buffer -> doCommit(() ->
-							writeWithInternal(Mono.fromCallable(() -> buffer)
-									.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release))))
-					.doOnError(t -> getHeaders().clearContentHeaders());
+					.flatMap(buffer -> {
+						touchDataBuffer(buffer);
+						AtomicBoolean subscribed = new AtomicBoolean();
+						return doCommit(
+								() -> {
+									try {
+										return writeWithInternal(Mono.fromCallable(() -> buffer)
+												.doOnSubscribe(s -> subscribed.set(true))
+												.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release));
+									}
+									catch (Throwable ex) {
+										return Mono.error(ex);
+									}
+								})
+								.doOnError(ex -> DataBufferUtils.release(buffer))
+								.doOnCancel(() -> {
+									if (!subscribed.get()) {
+										DataBufferUtils.release(buffer);
+									}
+								});
+					})
+					.doOnError(t -> getHeaders().clearContentHeaders())
+					.doOnDiscard(PooledDataBuffer.class, DataBufferUtils::release);
 		}
 		else {
 			return new ChannelSendOperator<>(body, inner -> doCommit(() -> writeWithInternal(inner)))
@@ -319,5 +335,14 @@ public abstract class AbstractServerHttpResponse implements ServerHttpResponse {
 	 * This method is called once only.
 	 */
 	protected abstract void applyCookies();
+
+	/**
+	 * Allow sub-classes to associate a hint with the data buffer if it is a
+	 * pooled buffer and supports leak tracking.
+	 * @param buffer the buffer to attach a hint to
+	 * @since 5.3.2
+	 */
+	protected void touchDataBuffer(DataBuffer buffer) {
+	}
 
 }

@@ -30,14 +30,17 @@ import org.mockito.Captor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import org.springframework.core.NamedThreadLocal;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ClientCodecConfigurer;
+import org.springframework.web.reactive.function.BodyExtractors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -130,6 +133,34 @@ public class DefaultWebClientTests {
 	}
 
 	@Test
+	public void contextFromThreadLocal() {
+		WebClient client = this.builder
+				.filter((request, next) ->
+						// Async, continue on different thread
+						Mono.delay(Duration.ofMillis(10)).then(next.exchange(request)))
+				.filter((request, next) ->
+						Mono.deferContextual(contextView -> {
+							String fooValue = contextView.get("foo");
+							return next.exchange(ClientRequest.from(request).header("foo", fooValue).build());
+						}))
+				.build();
+
+		ThreadLocal<String> fooHolder = new ThreadLocal<>();
+		fooHolder.set("bar");
+		try {
+			client.get().uri("/path")
+					.context(context -> context.put("foo", fooHolder.get()))
+					.retrieve().bodyToMono(Void.class).block(Duration.ofSeconds(10));
+		}
+		finally {
+			fooHolder.remove();
+		}
+
+		ClientRequest request = verifyAndGetRequest();
+		assertThat(request.headers().getFirst("foo")).isEqualTo("bar");
+	}
+
+	@Test
 	public void httpRequest() {
 		this.builder.build().get().uri("/path")
 				.httpRequest(httpRequest -> {})
@@ -142,7 +173,8 @@ public class DefaultWebClientTests {
 	@Test
 	public void defaultHeaderAndCookie() {
 		WebClient client = this.builder
-				.defaultHeader("Accept", "application/json").defaultCookie("id", "123")
+				.defaultHeader("Accept", "application/json")
+				.defaultCookie("id", "123")
 				.build();
 
 		client.get().uri("/path")
@@ -166,6 +198,33 @@ public class DefaultWebClientTests {
 				.retrieve().bodyToMono(Void.class).block(Duration.ofSeconds(10));
 
 		ClientRequest request = verifyAndGetRequest();
+		assertThat(request.headers().getFirst("Accept")).isEqualTo("application/xml");
+		assertThat(request.cookies().getFirst("id")).isEqualTo("456");
+	}
+
+	@Test
+	public void defaultHeaderAndCookieCopies() {
+		WebClient client1 = this.builder
+				.defaultHeader("Accept", "application/json")
+				.defaultCookie("id", "123")
+				.build();
+		WebClient client2 = this.builder
+				.defaultHeader("Accept", "application/xml")
+				.defaultCookies(cookies -> cookies.set("id", "456"))
+				.build();
+
+		client1.get().uri("/path")
+				.retrieve().bodyToMono(Void.class).block(Duration.ofSeconds(10));
+
+		ClientRequest request = verifyAndGetRequest();
+		assertThat(request.headers().getFirst("Accept")).isEqualTo("application/json");
+		assertThat(request.cookies().getFirst("id")).isEqualTo("123");
+
+
+		client2.get().uri("/path")
+				.retrieve().bodyToMono(Void.class).block(Duration.ofSeconds(10));
+
+		request = verifyAndGetRequest();
 		assertThat(request.headers().getFirst("Accept")).isEqualTo("application/xml");
 		assertThat(request.cookies().getFirst("id")).isEqualTo("456");
 	}
@@ -386,6 +445,28 @@ public class DefaultWebClientTests {
 		verify(predicate1).test(HttpStatus.BAD_REQUEST);
 		verify(predicate2).test(HttpStatus.BAD_REQUEST);
 	}
+
+	@Test // gh-26069
+	public void onStatusHandlersApplyForToEntityMethods() {
+
+		ClientResponse response = ClientResponse.create(HttpStatus.BAD_REQUEST).build();
+		given(exchangeFunction.exchange(any())).willReturn(Mono.just(response));
+
+		WebClient.ResponseSpec spec = this.builder.build().get().uri("/path").retrieve();
+
+		testStatusHandlerForToEntity(spec.toEntity(String.class));
+		testStatusHandlerForToEntity(spec.toEntity(new ParameterizedTypeReference<String>() {}));
+		testStatusHandlerForToEntity(spec.toEntityList(String.class));
+		testStatusHandlerForToEntity(spec.toEntityList(new ParameterizedTypeReference<String>() {}));
+		testStatusHandlerForToEntity(spec.toEntityFlux(String.class));
+		testStatusHandlerForToEntity(spec.toEntityFlux(new ParameterizedTypeReference<String>() {}));
+		testStatusHandlerForToEntity(spec.toEntityFlux(BodyExtractors.toFlux(String.class)));
+	}
+
+	private void testStatusHandlerForToEntity(Publisher<?> responsePublisher) {
+		StepVerifier.create(responsePublisher).expectError(WebClientResponseException.class).verify();
+	}
+
 
 	private ClientRequest verifyAndGetRequest() {
 		ClientRequest request = this.captor.getValue();
