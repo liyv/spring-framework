@@ -221,10 +221,13 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * <p><b>NOTE: This method introspects top-level beans only.</b> It does <i>not</i>
 	 * check nested beans which might match the specified type as well.
 	 * <p>Does consider objects created by FactoryBeans if the "allowEagerInit" flag is set,
-	 * which means that FactoryBeans will get initialized. If the object created by the
+	 * which means that FactoryBeans will get initialized.(allowEagerInit 是true 的话 就会初始化
+	 * FactoryBeans吗？)
+	 * If the object created by the
 	 * FactoryBean doesn't match, the raw FactoryBean itself will be matched against the
 	 * type. If "allowEagerInit" is not set, only raw FactoryBeans will be checked
-	 * (which doesn't require initialization of each FactoryBean).
+	 * (which doesn't require initialization of each FactoryBean).(allowEagerInit 是false的话 就
+	 * 只会检查 FactoryBean 本身)
 	 * <p>Does not consider any hierarchy this factory may participate in.
 	 * Use BeanFactoryUtils' {@code beanNamesForTypeIncludingAncestors}
 	 * to include beans in ancestor factories too.
@@ -232,6 +235,7 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * by other means than bean definitions.
 	 * <p>Bean names returned by this method should always return bean names <i>in the
 	 * order of definition</i> in the backend configuration, as far as possible.
+	 *
 	 * @param type the class or interface to match, or {@code null} for all bean names
 	 * @param includeNonSingletons whether to include prototype or scoped beans too
 	 * or just singletons (also applies to FactoryBeans)

@@ -283,7 +283,7 @@ class AnnotationDrivenBeanDefinitionParser implements BeanDefinitionParser {
 		String uriContributorName = MvcUriComponentsBuilder.MVC_URI_COMPONENTS_CONTRIBUTOR_BEAN_NAME;
 		readerContext.getRegistry().registerBeanDefinition(uriContributorName, uriContributorDef);
 
-		RootBeanDefinition csInterceptorDef = new RootBeanDefinition(ConversionServiceExposingInterceptor.class);
+		RootBeanDefinition csInterceptorDef = new RootBeanDefinition(.class);
 		csInterceptorDef.setSource(source);
 		csInterceptorDef.getConstructorArgumentValues().addIndexedArgumentValue(0, conversionService);
 		//

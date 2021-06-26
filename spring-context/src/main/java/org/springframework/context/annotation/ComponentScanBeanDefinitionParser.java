@@ -90,6 +90,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		// Actually scan for bean definitions and register them.
 		ClassPathBeanDefinitionScanner scanner = configureScanner(parserContext, element);
 		//是在解析xml阶段就进行了扫描处理？主要是为了得到 BeanDefinitions
+		//扫描 classpath下所有的class，是在什么地方处理的 @Configuration 类呢？
 		Set<BeanDefinitionHolder> beanDefinitions = scanner.doScan(basePackages);
 		registerComponents(parserContext.getReaderContext(), beanDefinitions, element);
 
@@ -105,6 +106,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		// Delegate bean definition registration to scanner class.
 		ClassPathBeanDefinitionScanner scanner = createScanner(parserContext.getReaderContext(), useDefaultFilters);
 		scanner.setBeanDefinitionDefaults(parserContext.getDelegate().getBeanDefinitionDefaults());
+		//默认的模式 是没有？
 		scanner.setAutowireCandidatePatterns(parserContext.getDelegate().getAutowireCandidatePatterns());
 
 		if (element.hasAttribute(RESOURCE_PATTERN_ATTRIBUTE)) {
@@ -112,6 +114,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		}
 
 		try {
+			//bean 名称生成器
 			parseBeanNameGenerator(element, scanner);
 		}
 		catch (Exception ex) {
@@ -182,7 +185,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 					scanner.getResourceLoader().getClassLoader());
 			scanner.setScopeMetadataResolver(scopeMetadataResolver);
 		}
-
+		//这些是什么意思
 		if (element.hasAttribute(SCOPED_PROXY_ATTRIBUTE)) {
 			String mode = element.getAttribute(SCOPED_PROXY_ATTRIBUTE);
 			if ("targetClass".equals(mode)) {
@@ -201,6 +204,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 	}
 
 	protected void parseTypeFilters(Element element, ClassPathBeanDefinitionScanner scanner, ParserContext parserContext) {
+		//包含的类型和排除的类型？
 		// Parse exclude and include filter elements.
 		//ParallelWebappClassLoader
 		//  context: ROOT

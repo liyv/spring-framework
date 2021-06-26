@@ -271,6 +271,7 @@ public abstract class AnnotationConfigUtils {
 		if (scopedProxyMode.equals(ScopedProxyMode.NO)) {
 			return definition;
 		}
+		//scopeProxyMode target_class 是什么 意思 ？基于 class 创建代理？
 		boolean proxyTargetClass = scopedProxyMode.equals(ScopedProxyMode.TARGET_CLASS);
 		return ScopedProxyCreator.createScopedProxy(definition, registry, proxyTargetClass);
 	}

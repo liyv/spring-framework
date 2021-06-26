@@ -91,6 +91,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 
 	protected final Log logger = LogFactory.getLog(getClass());
 
+	//所有的class
 	private String resourcePattern = DEFAULT_RESOURCE_PATTERN;
 	//0: interface org.springframework.stereotype.Component
 	//1: interface javax.annotation.ManagedBean
@@ -430,9 +431,11 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				}
 				if (resource.isReadable()) {
 					try {
+						//加载.class字节码
 						//getMetadataReaderFactory() = CachingMetadataReaderFactory
 						//其1：SimpleMetadataReader
 						MetadataReader metadataReader = getMetadataReaderFactory().getMetadataReader(resource);
+						//如果符合匹配规则，则封装为 ScannedGenericBeanDefinition
 						if (isCandidateComponent(metadataReader)) {
 							ScannedGenericBeanDefinition sbd = new ScannedGenericBeanDefinition(metadataReader);
 							sbd.setSource(resource);
@@ -497,6 +500,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 				return false;
 			}
 		}
+		//@Component @Service @Controller 等 @Named  @ManagedBean
 		for (TypeFilter tf : this.includeFilters) {
 			if (tf.match(metadataReader, getMetadataReaderFactory())) {
 				return isConditionMatch(metadataReader);

@@ -565,11 +565,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			// bean factory 又扮演什么角色，子类内部有 Bean factory 吗？？？
 			//只有一个子类还是有多个？？？
 			//DefaultListableBeanFactory 有多个层次关系吗？？？
+			//得到 BeanFactory 并且将 class 以 BeanDefinition 的形式注册到了工厂中
+			//那到底都注册了哪些BeanDefinition 呢
+			// Spring 提供的 BeanFactoryPostProcessor 有哪些呢 BeanPostProcessor 呢？
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			//todo:528
 
 			// Prepare the bean factory for use in this context.
+			//
 			prepareBeanFactory(beanFactory);
 
 			try {
@@ -582,6 +586,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				//BeanFactoryPostProcessor
 				// Invoke factory processors registered as beans in the context.
 				invokeBeanFactoryPostProcessors(beanFactory);
+				//以上好像都是在 从各种 源 找 BeanDefinition 并注册
+				//那是从哪开始 BeanDefinition 变为 Object?
 
 				//BeanPostProcessor
 				// Register bean processors that intercept bean creation.
@@ -778,6 +784,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
 		//getBeanFactoryPostProcessors()= List<BeanFactoryPostProcessor> 有多少个呢？ 0个
+		//主要是 BeanDefinitionRegistryPostProcessor 和 BeanFactoryPostProcessor
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime
@@ -950,6 +957,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		//实例化所有的 非 lazy-init 的 singleton
 		beanFactory.preInstantiateSingletons();
 	}
 

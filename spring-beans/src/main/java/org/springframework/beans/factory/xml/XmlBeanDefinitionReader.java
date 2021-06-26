@@ -529,6 +529,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * Create the {@link XmlReaderContext} to pass over to the document reader.
 	 */
 	public XmlReaderContext createReaderContext(Resource resource) {
+		//是如何包含 registry 的？？？
 		return new XmlReaderContext(resource, this.problemReporter, this.eventListener,
 				this.sourceExtractor, this, getNamespaceHandlerResolver());
 	}

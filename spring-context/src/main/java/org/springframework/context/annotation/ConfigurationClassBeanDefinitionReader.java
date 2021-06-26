@@ -136,7 +136,7 @@ class ConfigurationClassBeanDefinitionReader {
 	 */
 	private void loadBeanDefinitionsForConfigurationClass(
 			ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator) {
-
+		//与条件装配有关
 		if (trackedConditionEvaluator.shouldSkip(configClass)) {
 			String beanName = configClass.getBeanName();
 			if (StringUtils.hasLength(beanName) && this.registry.containsBeanDefinition(beanName)) {
@@ -145,15 +145,17 @@ class ConfigurationClassBeanDefinitionReader {
 			this.importRegistry.removeImportingClass(configClass.getMetadata().getClassName());
 			return;
 		}
-
+		//如果当前配置类是被@Import的，要把自己注册进 BeanFactory
 		if (configClass.isImported()) {
 			registerBeanDefinitionForImportedConfigurationClass(configClass);
 		}
+		//注册@Bean注解方法
 		for (BeanMethod beanMethod : configClass.getBeanMethods()) {
 			loadBeanDefinitionsForBeanMethod(beanMethod);
 		}
-
+		//注册来自XML配置文件的bean
 		loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());
+		//注册来自 ImportBeanDefinitionRegistrar 的bean
 		loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());
 	}
 
@@ -209,7 +211,7 @@ class ConfigurationClassBeanDefinitionReader {
 		for (String alias : names) {
 			this.registry.registerAlias(beanName, alias);
 		}
-
+		//注解中配置了@Bean，与xml中的bean冲突了，会抛异常
 		// Has this effectively been overridden before (e.g. via XML)?
 		if (isOverriddenByExistingDefinition(beanMethod, beanName)) {
 			if (beanName.equals(beanMethod.getConfigurationClass().getBeanName())) {

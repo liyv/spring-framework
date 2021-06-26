@@ -403,10 +403,12 @@ class ConstructorResolver {
 
 		String factoryBeanName = mbd.getFactoryBeanName();
 		if (factoryBeanName != null) {
+			//FactoryBean 来创建对象
 			if (factoryBeanName.equals(beanName)) {
 				throw new BeanDefinitionStoreException(mbd.getResourceDescription(), beanName,
 						"factory-bean reference points back to the same bean definition");
 			}
+			//先创建 FactoryBean
 			factoryBean = this.beanFactory.getBean(factoryBeanName);
 			if (mbd.isSingleton() && this.beanFactory.containsSingleton(beanName)) {
 				throw new ImplicitlyAppearedSingletonException();
@@ -453,6 +455,7 @@ class ConstructorResolver {
 		if (factoryMethodToUse == null || argsToUse == null) {
 			// Need to determine the factory method...
 			// Try all methods with this name to see if they match the given arguments.
+			//以防 CGLIB-generated subclass
 			factoryClass = ClassUtils.getUserClass(factoryClass);
 
 			List<Method> candidates = null;
@@ -469,12 +472,14 @@ class ConstructorResolver {
 				Method[] rawCandidates = getCandidateMethods(factoryClass, mbd);
 				for (Method candidate : rawCandidates) {
 					if (Modifier.isStatic(candidate.getModifiers()) == isStatic && mbd.isFactoryMethod(candidate)) {
+						//静态工厂方法
 						candidates.add(candidate);
 					}
 				}
 			}
 
 			if (candidates.size() == 1 && explicitArgs == null && !mbd.hasConstructorArgumentValues()) {
+				//有构造函数参数？
 				Method uniqueCandidate = candidates.get(0);
 				if (uniqueCandidate.getParameterCount() == 0) {
 					mbd.factoryMethodToIntrospect = uniqueCandidate;
@@ -483,16 +488,18 @@ class ConstructorResolver {
 						mbd.constructorArgumentsResolved = true;
 						mbd.resolvedConstructorArguments = EMPTY_ARGS;
 					}
+					//静态工厂方法创建对象
 					bw.setBeanInstance(instantiate(beanName, mbd, factoryBean, uniqueCandidate, EMPTY_ARGS));
 					return bw;
 				}
 			}
-
+			//候选的数量大于1，为什么会大于1呢？很明显，是静态方法并且名称相同，这可以有多个
 			if (candidates.size() > 1) {  // explicitly skip immutable singletonList
 				candidates.sort(AutowireUtils.EXECUTABLE_COMPARATOR);
 			}
 
 			ConstructorArgumentValues resolvedValues = null;
+			//自动注入模式是构造函数注入，默认的是没有
 			boolean autowiring = (mbd.getResolvedAutowireMode() == AutowireCapableBeanFactory.AUTOWIRE_CONSTRUCTOR);
 			int minTypeDiffWeight = Integer.MAX_VALUE;
 			Set<Method> ambiguousFactoryMethods = null;
@@ -505,8 +512,10 @@ class ConstructorResolver {
 				// We don't have arguments passed in programmatically, so we need to resolve the
 				// arguments specified in the constructor arguments held in the bean definition.
 				if (mbd.hasConstructorArgumentValues()) {
+					//构造参数吗
 					ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
 					resolvedValues = new ConstructorArgumentValues();
+					//解析构造参数
 					minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
 				}
 				else {
@@ -521,9 +530,10 @@ class ConstructorResolver {
 
 				if (parameterCount >= minNrOfArgs) {
 					ArgumentsHolder argsHolder;
-
+					//参数类型
 					Class<?>[] paramTypes = candidate.getParameterTypes();
 					if (explicitArgs != null) {
+						//有显示的传参的情况
 						// Explicit arguments given -> arguments length must match exactly.
 						if (paramTypes.length != explicitArgs.length) {
 							continue;
@@ -534,6 +544,7 @@ class ConstructorResolver {
 						// Resolved constructor arguments: type conversion and/or autowiring necessary.
 						try {
 							String[] paramNames = null;
+							//参数名称发现？
 							ParameterNameDiscoverer pnd = this.beanFactory.getParameterNameDiscoverer();
 							if (pnd != null) {
 								paramNames = pnd.getParameterNames(candidate);
@@ -557,6 +568,7 @@ class ConstructorResolver {
 					int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 							argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 					// Choose this factory method if it represents the closest match.
+					//找到最匹配的那个
 					if (typeDiffWeight < minTypeDiffWeight) {
 						factoryMethodToUse = candidate;
 						argsHolderToUse = argsHolder;
@@ -634,7 +646,7 @@ class ConstructorResolver {
 				argsHolderToUse.storeCache(mbd, factoryMethodToUse);
 			}
 		}
-
+		//instantiate 发射 调用
 		bw.setBeanInstance(instantiate(beanName, mbd, factoryBean, factoryMethodToUse, argsToUse));
 		return bw;
 	}
@@ -669,7 +681,9 @@ class ConstructorResolver {
 			ConstructorArgumentValues cargs, ConstructorArgumentValues resolvedValues) {
 
 		TypeConverter customConverter = this.beanFactory.getCustomTypeConverter();
+		// BeanWrapper 也是类型转换
 		TypeConverter converter = (customConverter != null ? customConverter : bw);
+
 		BeanDefinitionValueResolver valueResolver =
 				new BeanDefinitionValueResolver(this.beanFactory, beanName, mbd, converter);
 
@@ -681,6 +695,7 @@ class ConstructorResolver {
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Invalid constructor argument index: " + index);
 			}
+			//参数的个数？
 			if (index + 1 > minNrOfArgs) {
 				minNrOfArgs = index + 1;
 			}
@@ -730,9 +745,10 @@ class ConstructorResolver {
 		ArgumentsHolder args = new ArgumentsHolder(paramTypes.length);
 		Set<ConstructorArgumentValues.ValueHolder> usedValueHolders = new HashSet<>(paramTypes.length);
 		Set<String> autowiredBeanNames = new LinkedHashSet<>(4);
-
+		//迭代参数类型
 		for (int paramIndex = 0; paramIndex < paramTypes.length; paramIndex++) {
 			Class<?> paramType = paramTypes[paramIndex];
+			//参数名称
 			String paramName = (paramNames != null ? paramNames[paramIndex] : "");
 			// Try to find matching constructor argument value, either indexed or generic.
 			ConstructorArgumentValues.ValueHolder valueHolder = null;

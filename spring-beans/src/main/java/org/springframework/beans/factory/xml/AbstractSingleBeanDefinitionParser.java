@@ -60,6 +60,7 @@ public abstract class AbstractSingleBeanDefinitionParser extends AbstractBeanDef
 	 */
 	@Override
 	protected final AbstractBeanDefinition parseInternal(Element element, ParserContext parserContext) {
+		//建造者模式？
 		BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition();
 		String parentName = getParentName(element);
 		if (parentName != null) {

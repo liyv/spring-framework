@@ -87,6 +87,7 @@ public abstract class AbstractBeanDefinitionReader implements BeanDefinitionRead
 	 */
 	protected AbstractBeanDefinitionReader(BeanDefinitionRegistry registry) {
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
+		//DefaultListableBeanFactory
 		this.registry = registry;
 
 		// Determine ResourceLoader to use.

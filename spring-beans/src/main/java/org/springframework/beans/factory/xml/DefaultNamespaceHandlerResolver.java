@@ -46,11 +46,15 @@ import org.springframework.util.CollectionUtils;
  * @since 2.0
  * @see NamespaceHandler
  * @see DefaultBeanDefinitionDocumentReader
+ * 给某个命名空间url 定位 NamespaceHandler
  */
 public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver {
 
 	/**
 	 * The location to look for the mapping files. Can be present in multiple JAR files.
+	 * 这是所有的 NamespaceHandler 吗？
+	 * 从这些文件中找寻 url 对应的 handler
+	 * 比如 mvc 的： http\://www.springframework.org/schema/mvc=org.springframework.web.servlet.config.MvcNamespaceHandler
 	 */
 	public static final String DEFAULT_HANDLER_MAPPINGS_LOCATION = "META-INF/spring.handlers";
 
@@ -66,6 +70,7 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	private final String handlerMappingsLocation;
 
 	/** Stores the mappings from namespace URI to NamespaceHandler class name / instance. */
+	/** 缓存 handler */
 	@Nullable
 	private volatile Map<String, Object> handlerMappings;
 
@@ -116,6 +121,8 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	@Nullable
 	public NamespaceHandler resolve(String namespaceUri) {
 		Map<String, Object> handlerMappings = getHandlerMappings();
+		//根据url 找到对应的 handler
+		//http\://www.springframework.org/schema/mvc=org.springframework.web.servlet.config.MvcNamespaceHandler
 		Object handlerOrClassName = handlerMappings.get(namespaceUri);
 		if (handlerOrClassName == null) {
 			return null;
@@ -152,6 +159,7 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 	 */
 	private Map<String, Object> getHandlerMappings() {
 		Map<String, Object> handlerMappings = this.handlerMappings;
+		//使用双检测
 		if (handlerMappings == null) {
 			synchronized (this) {
 				handlerMappings = this.handlerMappings;

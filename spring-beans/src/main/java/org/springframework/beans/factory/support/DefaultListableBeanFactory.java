@@ -176,16 +176,22 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 	/** Map from bean name to merged BeanDefinitionHolder. */
 	private final Map<String, BeanDefinitionHolder> mergedBeanDefinitionHolders = new ConcurrentHashMap<>(256);
 
-	/** Map of singleton and non-singleton bean names, keyed by dependency type. */
+	/** Map of singleton and non-singleton bean names, keyed by dependency type.
+	 * 这个是什么意思
+	 * */
 	private final Map<Class<?>, String[]> allBeanNamesByType = new ConcurrentHashMap<>(64);
 
-	/** Map of singleton-only bean names, keyed by dependency type. */
+	/** Map of singleton-only bean names, keyed by dependency type.
+	 * 这个是什么意思
+	 * */
 	private final Map<Class<?>, String[]> singletonBeanNamesByType = new ConcurrentHashMap<>(64);
 
 	/** List of bean definition names, in registration order. */
 	private volatile List<String> beanDefinitionNames = new ArrayList<>(256);
 
-	/** List of names of manually registered singletons, in registration order. */
+	/** List of names of manually registered singletons, in registration order.
+	 * 手动注册的 singleton ? 是 Spring 还是用户
+	 * */
 	private volatile Set<String> manualSingletonNames = new LinkedHashSet<>(16);
 
 	/** Cached array of bean definition names in case of frozen configuration. */
@@ -937,6 +943,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
 				if (isFactoryBean(beanName)) {
+					//FactoryBean
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;
@@ -975,6 +982,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					}, getAccessControlContext());
 				}
 				else {
+					//singleton 实例化之后 的后续操作？
 					smartSingleton.afterSingletonsInstantiated();
 				}
 				smartInitialize.end();

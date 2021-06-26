@@ -228,10 +228,11 @@ class ConfigurationClassParser {
 
 
 	protected void processConfigurationClass(ConfigurationClass configClass, Predicate<String> filter) throws IOException {
+		//涉及到 @Conditional 后续分析
 		if (this.conditionEvaluator.shouldSkip(configClass.getMetadata(), ConfigurationPhase.PARSE_CONFIGURATION)) {
 			return;
 		}
-
+		//什么 时候填充的？
 		ConfigurationClass existingClass = this.configurationClasses.get(configClass);
 		if (existingClass != null) {
 			if (configClass.isImported()) {
@@ -255,7 +256,7 @@ class ConfigurationClassParser {
 			sourceClass = doProcessConfigurationClass(configClass, sourceClass, filter);
 		}
 		while (sourceClass != null);
-
+		//这只是找出 @Configuration 类吗？
 		this.configurationClasses.put(configClass, configClass);
 	}
 
@@ -299,6 +300,7 @@ class ConfigurationClassParser {
 				// The config class is annotated with @ComponentScan -> perform the scan immediately
 				Set<BeanDefinitionHolder> scannedBeanDefinitions =
 						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
+				//是否扫描到了其他注解配置类
 				// Check the set of scanned definitions for any further config classes and parse recursively if needed
 				for (BeanDefinitionHolder holder : scannedBeanDefinitions) {
 					BeanDefinition bdCand = holder.getBeanDefinition().getOriginatingBeanDefinition();
@@ -356,7 +358,7 @@ class ConfigurationClassParser {
 	 */
 	private void processMemberClasses(ConfigurationClass configClass, SourceClass sourceClass,
 			Predicate<String> filter) throws IOException {
-
+		//获取配置类中的所有内部类
 		Collection<SourceClass> memberClasses = sourceClass.getMemberClasses();
 		if (!memberClasses.isEmpty()) {
 			List<SourceClass> candidates = new ArrayList<>(memberClasses.size());
@@ -405,6 +407,7 @@ class ConfigurationClassParser {
 	 */
 	private Set<MethodMetadata> retrieveBeanMethodMetadata(SourceClass sourceClass) {
 		AnnotationMetadata original = sourceClass.getMetadata();
+		//获取@Bean注解标注的方法
 		Set<MethodMetadata> beanMethods = original.getAnnotatedMethods(Bean.class.getName());
 		if (beanMethods.size() > 1 && original instanceof StandardAnnotationMetadata) {
 			// Try reading the class file via ASM for deterministic declaration order...
@@ -775,6 +778,7 @@ class ConfigurationClassParser {
 		}
 
 		public void process() {
+			//importSelector
 			List<DeferredImportSelectorHolder> deferredImports = this.deferredImportSelectors;
 			this.deferredImportSelectors = null;
 			try {

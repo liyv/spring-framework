@@ -76,7 +76,9 @@ public class XmlReaderContext extends ReaderContext {
 			XmlBeanDefinitionReader reader, NamespaceHandlerResolver namespaceHandlerResolver) {
 
 		super(resource, problemReporter, eventListener, sourceExtractor);
+		//XmlBeanDefinitionReader
 		this.reader = reader;
+		//DefaultNamespaceHandlerResolver
 		this.namespaceHandlerResolver = namespaceHandlerResolver;
 	}
 

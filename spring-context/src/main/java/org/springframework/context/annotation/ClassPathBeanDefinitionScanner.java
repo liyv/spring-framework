@@ -160,6 +160,7 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 			Environment environment, @Nullable ResourceLoader resourceLoader) {
 
 		Assert.notNull(registry, "BeanDefinitionRegistry must not be null");
+		//DefaultListableBeanFactory
 		this.registry = registry;
 
 		if (useDefaultFilters) {
@@ -270,25 +271,32 @@ public class ClassPathBeanDefinitionScanner extends ClassPathScanningCandidateCo
 	 * @return set of beans registered if any for tooling registration purposes (never {@code null})
 	 */
 	protected Set<BeanDefinitionHolder> doScan(String... basePackages) {
+		//不会注册注解配置处理器？？？
 		Assert.notEmpty(basePackages, "At least one base package must be specified");
 		Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
 		for (String basePackage : basePackages) {
+			//真正的包扫描动作在这里
 			Set<BeanDefinition> candidates = findCandidateComponents(basePackage);
 			for (BeanDefinition candidate : candidates) {
+				//如何处理 @Configuration 类的呢？
 				ScopeMetadata scopeMetadata = this.scopeMetadataResolver.resolveScopeMetadata(candidate);
 				candidate.setScope(scopeMetadata.getScopeName());
+				//生成bean的名称
 				String beanName = this.beanNameGenerator.generateBeanName(candidate, this.registry);
 				if (candidate instanceof AbstractBeanDefinition) {
 					postProcessBeanDefinition((AbstractBeanDefinition) candidate, beanName);
 				}
+				//处理bean中的@Lazy、@Primary等注解
 				if (candidate instanceof AnnotatedBeanDefinition) {
 					AnnotationConfigUtils.processCommonDefinitionAnnotations((AnnotatedBeanDefinition) candidate);
 				}
 				if (checkCandidate(beanName, candidate)) {
 					BeanDefinitionHolder definitionHolder = new BeanDefinitionHolder(candidate, beanName);
+					//设置AOP相关的属性(如果支持的话)
 					definitionHolder =
 							AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, this.registry);
 					beanDefinitions.add(definitionHolder);
+					//注册到 BeanDefinitionRegistry
 					registerBeanDefinition(definitionHolder, this.registry);
 				}
 			}

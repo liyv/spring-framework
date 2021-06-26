@@ -43,7 +43,9 @@ import org.springframework.lang.Nullable;
  */
 public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanRegistry {
 
-	/** Cache of singleton objects created by FactoryBeans: FactoryBean name to object. */
+	/** Cache of singleton objects created by FactoryBeans: FactoryBean name to object.
+	 * 存放 FactoryBean 创建的 Object
+	 * */
 	private final Map<String, Object> factoryBeanObjectCache = new ConcurrentHashMap<>(16);
 
 
@@ -81,6 +83,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 */
 	@Nullable
 	protected Object getCachedObjectForFactoryBean(String beanName) {
+		//缓存了 FactoryBean 创建的对象
 		return this.factoryBeanObjectCache.get(beanName);
 	}
 
@@ -98,6 +101,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			synchronized (getSingletonMutex()) {
 				Object object = this.factoryBeanObjectCache.get(beanName);
 				if (object == null) {
+					//从 FactoryBean 中获取 Object
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
