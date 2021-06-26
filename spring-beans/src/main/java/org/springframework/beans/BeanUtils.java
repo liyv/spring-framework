@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,6 @@ import kotlin.reflect.KParameter;
 import kotlin.reflect.full.KClasses;
 import kotlin.reflect.jvm.KCallablesJvm;
 import kotlin.reflect.jvm.ReflectJvmMapping;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import org.springframework.core.DefaultParameterNameDiscoverer;
 import org.springframework.core.KotlinDetector;
@@ -74,8 +72,6 @@ import org.springframework.util.StringUtils;
  * @author Sebastien Deleuze
  */
 public abstract class BeanUtils {
-
-	private static final Log logger = LogFactory.getLog(BeanUtils.class);
 
 	private static final ParameterNameDiscoverer parameterNameDiscoverer =
 			new DefaultParameterNameDiscoverer();
@@ -268,10 +264,7 @@ public abstract class BeanUtils {
 	public static <T> Constructor<T> findPrimaryConstructor(Class<T> clazz) {
 		Assert.notNull(clazz, "Class must not be null");
 		if (KotlinDetector.isKotlinReflectPresent() && KotlinDetector.isKotlinType(clazz)) {
-			Constructor<T> kotlinPrimaryConstructor = KotlinDelegate.findPrimaryConstructor(clazz);
-			if (kotlinPrimaryConstructor != null) {
-				return kotlinPrimaryConstructor;
-			}
+			return KotlinDelegate.findPrimaryConstructor(clazz);
 		}
 		return null;
 	}
@@ -554,9 +547,6 @@ public abstract class BeanUtils {
 			}
 			catch (Throwable ex) {
 				// e.g. AccessControlException on Google App Engine
-				if (logger.isDebugEnabled()) {
-					logger.debug("Could not access system ClassLoader: " + ex);
-				}
 				return null;
 			}
 		}
@@ -567,10 +557,6 @@ public abstract class BeanUtils {
 			Class<?> editorClass = cl.loadClass(editorName);
 			if (editorClass != null) {
 				if (!PropertyEditor.class.isAssignableFrom(editorClass)) {
-					if (logger.isInfoEnabled()) {
-						logger.info("Editor class [" + editorName +
-								"] does not implement [java.beans.PropertyEditor] interface");
-					}
 					unknownEditorTypes.add(targetType);
 					return null;
 				}
@@ -581,10 +567,6 @@ public abstract class BeanUtils {
 		}
 		catch (ClassNotFoundException ex) {
 			// Ignore - fall back to unknown editor type registration below
-		}
-		if (logger.isTraceEnabled()) {
-			logger.trace("No property editor [" + editorName + "] found for type " +
-					targetTypeName + " according to 'Editor' suffix convention");
 		}
 		unknownEditorTypes.add(targetType);
 		return null;
@@ -779,7 +761,14 @@ public abstract class BeanUtils {
 					if (readMethod != null) {
 						ResolvableType sourceResolvableType = ResolvableType.forMethodReturnType(readMethod);
 						ResolvableType targetResolvableType = ResolvableType.forMethodParameter(writeMethod, 0);
-						if (targetResolvableType.isAssignableFrom(sourceResolvableType)) {
+
+						// Ignore generic types in assignable check if either ResolvableType has unresolvable generics.
+						boolean isAssignable =
+								(sourceResolvableType.hasUnresolvableGenerics() || targetResolvableType.hasUnresolvableGenerics() ?
+										ClassUtils.isAssignable(writeMethod.getParameterTypes()[0], readMethod.getReturnType()) :
+										targetResolvableType.isAssignableFrom(sourceResolvableType));
+
+						if (isAssignable) {
 							try {
 								if (!Modifier.isPublic(readMethod.getDeclaringClass().getModifiers())) {
 									readMethod.setAccessible(true);

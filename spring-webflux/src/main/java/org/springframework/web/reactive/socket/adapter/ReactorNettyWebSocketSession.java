@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.springframework.web.reactive.socket.adapter;
 
 import java.util.function.Consumer;
 
+import io.netty.channel.ChannelId;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
@@ -24,6 +26,7 @@ import reactor.core.publisher.Mono;
 import reactor.netty.Connection;
 import reactor.netty.NettyInbound;
 import reactor.netty.NettyOutbound;
+import reactor.netty.channel.ChannelOperations;
 import reactor.netty.http.websocket.WebsocketInbound;
 import reactor.netty.http.websocket.WebsocketOutbound;
 
@@ -32,7 +35,6 @@ import org.springframework.web.reactive.socket.CloseStatus;
 import org.springframework.web.reactive.socket.HandshakeInfo;
 import org.springframework.web.reactive.socket.WebSocketMessage;
 import org.springframework.web.reactive.socket.WebSocketSession;
-
 
 /**
  * {@link WebSocketSession} implementation for use with the Reactor Netty's
@@ -45,6 +47,8 @@ public class ReactorNettyWebSocketSession
 		extends NettyWebSocketSessionSupport<ReactorNettyWebSocketSession.WebSocketConnection> {
 
 	private final int maxFramePayloadLength;
+
+	private final ChannelId channelId;
 
 
 	/**
@@ -66,6 +70,16 @@ public class ReactorNettyWebSocketSession
 
 		super(new WebSocketConnection(inbound, outbound), info, bufferFactory);
 		this.maxFramePayloadLength = maxFramePayloadLength;
+		this.channelId = ((ChannelOperations) inbound).channel().id();
+	}
+
+
+	/**
+	 * Return the id of the underlying Netty channel.
+	 * @since 5.3.4
+	 */
+	public ChannelId getChannelId() {
+		return this.channelId;
 	}
 
 
@@ -100,7 +114,7 @@ public class ReactorNettyWebSocketSession
 	public boolean isOpen() {
 		DisposedCallback callback = new DisposedCallback();
 		getDelegate().getInbound().withConnection(callback);
-		return callback.isDisposed();
+		return !callback.isDisposed();
 	}
 
 	@Override

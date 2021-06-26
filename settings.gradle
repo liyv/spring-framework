@@ -6,8 +6,8 @@ pluginManagement {
 }
 
 plugins {
-	id "com.gradle.enterprise" version "3.2"
-	id "io.spring.gradle-enterprise-conventions" version "0.0.2"
+	id "com.gradle.enterprise" version "3.6.1"
+	id "io.spring.ge.conventions" version "0.0.7"
 }
 
 include "spring-aop"
@@ -45,12 +45,6 @@ rootProject.children.each {project ->
 settings.gradle.projectsLoaded {
 	gradleEnterprise {
 		buildScan {
-			if (settings.gradle.rootProject.hasProperty('customJavaHome')) {
-				value("Custom JAVA_HOME", settings.gradle.rootProject.getProperty('customJavaHome'))
-			}
-			if (settings.gradle.rootProject.hasProperty('customJavaSourceVersion')) {
-				value("Custom Java Source Version", settings.gradle.rootProject.getProperty('customJavaSourceVersion'))
-			}
 			File buildDir = settings.gradle.rootProject.getBuildDir()
 			buildDir.mkdirs()
 			new File(buildDir, "build-scan-uri.txt").text = "(build scan not generated)"

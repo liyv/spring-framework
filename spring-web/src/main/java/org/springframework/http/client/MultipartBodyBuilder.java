@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.http.codec.multipart.Part;
 import org.springframework.lang.NonNull;
 import org.springframework.lang.Nullable;
@@ -129,12 +128,18 @@ public final class MultipartBodyBuilder {
 		Assert.notNull(part, "'part' must not be null");
 
 		if (part instanceof Part) {
-			PartBuilder builder = asyncPart(name, ((Part) part).content(), DataBuffer.class);
+			Part partObject = (Part) part;
+			PartBuilder builder = asyncPart(name, partObject.content(), DataBuffer.class);
+			if (!partObject.headers().isEmpty()) {
+				builder.headers(headers -> {
+					headers.putAll(partObject.headers());
+					String filename = headers.getContentDisposition().getFilename();
+					// reset to parameter name
+					headers.setContentDispositionFormData(name, filename);
+				});
+			}
 			if (contentType != null) {
 				builder.contentType(contentType);
-			}
-			if (part instanceof FilePart) {
-				builder.filename(((FilePart) part).filename());
 			}
 			return builder;
 		}

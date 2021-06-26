@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import org.springframework.core.annotation.AnnotationAwareOrderComparator;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.core.log.LogFormatUtils;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.server.RequestPath;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.lang.Nullable;
@@ -952,9 +953,10 @@ public class DispatcherServlet extends FrameworkServlet {
 			request.setAttribute(FLASH_MAP_MANAGER_ATTRIBUTE, this.flashMapManager);
 		}
 
-		RequestPath requestPath = null;
-		if (this.parseRequestPath && !ServletRequestPathUtils.hasParsedRequestPath(request)) {
-			requestPath = ServletRequestPathUtils.parseAndCache(request);
+		RequestPath previousRequestPath = null;
+		if (this.parseRequestPath) {
+			previousRequestPath = (RequestPath) request.getAttribute(ServletRequestPathUtils.PATH_ATTRIBUTE);
+			ServletRequestPathUtils.parseAndCache(request);
 		}
 
 		try {
@@ -967,8 +969,8 @@ public class DispatcherServlet extends FrameworkServlet {
 					restoreAttributesAfterInclude(request, attributesSnapshot);
 				}
 			}
-			if (requestPath != null) {
-				ServletRequestPathUtils.clearParsedRequestPath(request);
+			if (this.parseRequestPath) {
+				ServletRequestPathUtils.setParsedRequestPath(previousRequestPath, request);
 			}
 		}
 	}
@@ -987,8 +989,8 @@ public class DispatcherServlet extends FrameworkServlet {
 
 			String queryString = request.getQueryString();
 			String queryClause = (StringUtils.hasLength(queryString) ? "?" + queryString : "");
-			String dispatchType = (!request.getDispatcherType().equals(DispatcherType.REQUEST) ?
-					"\"" + request.getDispatcherType().name() + "\" dispatch for " : "");
+			String dispatchType = (!DispatcherType.REQUEST.equals(request.getDispatcherType()) ?
+					"\"" + request.getDispatcherType() + "\" dispatch for " : "");
 			String message = (dispatchType + request.getMethod() + " \"" + getRequestUri(request) +
 					queryClause + "\", parameters={" + params + "}");
 
@@ -1045,8 +1047,8 @@ public class DispatcherServlet extends FrameworkServlet {
 
 				// Process last-modified header, if supported by the handler.
 				String method = request.getMethod();
-				boolean isGet = "GET".equals(method);
-				if (isGet || "HEAD".equals(method)) {
+				boolean isGet = HttpMethod.GET.matches(method);
+				if (isGet || HttpMethod.HEAD.matches(method)) {
 					long lastModified = ha.getLastModified(request, mappedHandler.getHandler());
 					if (new ServletWebRequest(request, response).checkNotModified(lastModified) && isGet) {
 						return;
@@ -1186,7 +1188,7 @@ public class DispatcherServlet extends FrameworkServlet {
 	protected HttpServletRequest checkMultipart(HttpServletRequest request) throws MultipartException {
 		if (this.multipartResolver != null && this.multipartResolver.isMultipart(request)) {
 			if (WebUtils.getNativeRequest(request, MultipartHttpServletRequest.class) != null) {
-				if (request.getDispatcherType().equals(DispatcherType.REQUEST)) {
+				if (DispatcherType.REQUEST.equals(request.getDispatcherType())) {
 					logger.trace("Request already resolved to MultipartHttpServletRequest, e.g. by MultipartFilter");
 				}
 			}

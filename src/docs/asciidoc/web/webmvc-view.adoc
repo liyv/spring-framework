@@ -822,8 +822,8 @@ template engine configuration, for example). The following example shows how to 
 ----
 
 Check out the Spring Framework unit tests,
-https://github.com/spring-projects/spring-framework/tree/master/spring-webmvc/src/test/java/org/springframework/web/servlet/view/script[Java], and
-https://github.com/spring-projects/spring-framework/tree/master/spring-webmvc/src/test/resources/org/springframework/web/servlet/view/script[resources],
+{spring-framework-main-code}/spring-webmvc/src/test/java/org/springframework/web/servlet/view/script[Java], and
+{spring-framework-main-code}/spring-webmvc/src/test/resources/org/springframework/web/servlet/view/script[resources],
 for more configuration examples.
 
 
@@ -905,8 +905,7 @@ called `spring-form.tld`.
 To use the tags from this library, add the following directive to the top of your JSP
 page:
 
-[source,xml,indent=0]
-[subs="verbatim,quotes"]
+[source,xml,indent=0,subs="verbatim,quotes"]
 ----
 	<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 ----

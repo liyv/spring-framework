@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2020 the original author or authors.
+ * Copyright 2002-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,10 @@ import java.time.DateTimeException;
 import java.time.temporal.ChronoField;
 import java.time.temporal.Temporal;
 import java.time.temporal.ValueRange;
+import java.util.function.BiFunction;
 
 import org.springframework.lang.Nullable;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 /**
@@ -77,11 +79,18 @@ abstract class CronField {
 	 * Parse the given value into a days of months {@code CronField}, the fourth entry of a cron expression.
 	 */
 	public static CronField parseDaysOfMonth(String value) {
-		if (value.contains("L") || value.contains("W")) {
-			return QuartzCronField.parseDaysOfMonth(value);
+		if (!QuartzCronField.isQuartzDaysOfMonthField(value)) {
+			return BitsCronField.parseDaysOfMonth(value);
 		}
 		else {
-			return BitsCronField.parseDaysOfMonth(value);
+			return parseList(value, Type.DAY_OF_MONTH, (field, type) -> {
+				if (QuartzCronField.isQuartzDaysOfMonthField(field)) {
+					return QuartzCronField.parseDaysOfMonth(field);
+				}
+				else {
+					return BitsCronField.parseDaysOfMonth(field);
+				}
+			});
 		}
 	}
 
@@ -98,14 +107,31 @@ abstract class CronField {
 	 */
 	public static CronField parseDaysOfWeek(String value) {
 		value = replaceOrdinals(value, DAYS);
-		if (value.contains("L") || value.contains("#")) {
-			return QuartzCronField.parseDaysOfWeek(value);
+		if (!QuartzCronField.isQuartzDaysOfWeekField(value)) {
+			return BitsCronField.parseDaysOfWeek(value);
 		}
 		else {
-			return BitsCronField.parseDaysOfWeek(value);
+			return parseList(value, Type.DAY_OF_WEEK, (field, type) -> {
+				if (QuartzCronField.isQuartzDaysOfWeekField(field)) {
+					return QuartzCronField.parseDaysOfWeek(field);
+				}
+				else {
+					return BitsCronField.parseDaysOfWeek(field);
+				}
+			});
 		}
 	}
 
+
+	private static CronField parseList(String value, Type type, BiFunction<String, Type, CronField> parseFieldFunction) {
+		Assert.hasLength(value, "Value must not be empty");
+		String[] fields = StringUtils.delimitedListToStringArray(value, ",");
+		CronField[] cronFields = new CronField[fields.length];
+		for (int i = 0; i < fields.length; i++) {
+			cronFields[i] = parseFieldFunction.apply(fields[i], type);
+		}
+		return CompositeCronField.compose(cronFields, type, value);
+	}
 
 	private static String replaceOrdinals(String value, String[] list) {
 		value = value.toUpperCase();
@@ -129,6 +155,11 @@ abstract class CronField {
 
 	protected Type type() {
 		return this.type;
+	}
+
+	@SuppressWarnings("unchecked")
+	protected static <T extends Temporal & Comparable<? super T>> T cast(Temporal temporal) {
+		return (T) temporal;
 	}
 
 
@@ -210,11 +241,17 @@ abstract class CronField {
 		 */
 		public <T extends Temporal & Comparable<? super T>> T elapseUntil(T temporal, int goal) {
 			int current = get(temporal);
+			ValueRange range = temporal.range(this.field);
 			if (current < goal) {
-				return this.field.getBaseUnit().addTo(temporal, goal - current);
+				if (range.isValidIntValue(goal)) {
+					return cast(temporal.with(this.field, goal));
+				}
+				else {
+					// goal is invalid, eg. 29th Feb, lets try to get as close as possible
+					return this.field.getBaseUnit().addTo(temporal, goal - current);
+				}
 			}
 			else {
-				ValueRange range = temporal.range(this.field);
 				long amount = goal + range.getMaximum() - current + 1 - range.getMinimum();
 				return this.field.getBaseUnit().addTo(temporal, amount);
 			}

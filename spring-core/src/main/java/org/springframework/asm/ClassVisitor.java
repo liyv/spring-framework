@@ -30,8 +30,8 @@ package org.springframework.asm;
 /**
  * A visitor to visit a Java class. The methods of this class must be called in the following order:
  * {@code visit} [ {@code visitSource} ] [ {@code visitModule} ][ {@code visitNestHost} ][ {@code
- * visitPermittedSubclass} ][ {@code visitOuterClass} ] ( {@code visitAnnotation} | {@code
- * visitTypeAnnotation} | {@code visitAttribute} )* ( {@code visitNestMember} | {@code
+ * visitOuterClass} ] ( {@code visitAnnotation} | {@code visitTypeAnnotation} | {@code
+ * visitAttribute} )* ( {@code visitNestMember} | [ {@code * visitPermittedSubclass} ] | {@code
  * visitInnerClass} | {@code visitRecordComponent} | {@code visitField} | {@code visitMethod} )*
  * {@code visitEnd}.
  *
@@ -77,7 +77,7 @@ public abstract class ClassVisitor {
         && api != Opcodes.ASM10_EXPERIMENTAL) {
       throw new IllegalArgumentException("Unsupported api " + api);
     }
-    // SPRING PATCH: no preview mode check for ASM 9 experimental
+    // SPRING PATCH: no preview mode check for ASM experimental
     this.api = api;
     this.cv = classVisitor;
   }

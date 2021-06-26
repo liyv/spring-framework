@@ -1,7 +1,5 @@
 [[testing]]
 = Testing
-:doc-root: https://docs.spring.io
-:api-spring-framework: {doc-root}/spring-framework/docs/{spring-version}/javadoc-api/org/springframework
 :doc-spring-boot: {doc-root}/spring-boot/docs/current/reference
 :toc: left
 :toclevels: 4
@@ -1846,7 +1844,8 @@ constructor takes precedence over both `@TestConstructor` and the default mode.
 =====
 The default _test constructor autowire mode_ can be changed by setting the
 `spring.test.constructor.autowire.mode` JVM system property to `all`. Alternatively, the
-default mode may be set via the `SpringProperties` mechanism.
+default mode may be set via the
+<<appendix.adoc#appendix-spring-properties,`SpringProperties`>> mechanism.
 
 As of Spring Framework 5.3, the default mode may also be configured as a
 https://junit.org/junit5/docs/current/user-guide/#running-tests-config-params[JUnit Platform configuration parameter].
@@ -1878,8 +1877,8 @@ change the default mode.
 =====
 The default _enclosing configuration inheritance mode_ is `INHERIT`, but it can be
 changed by setting the `spring.test.enclosing.configuration` JVM system property to
-`OVERRIDE`. Alternatively, the default mode may be set via the `SpringProperties`
-mechanism.
+`OVERRIDE`. Alternatively, the default mode may be set via the
+<<appendix.adoc#appendix-spring-properties,`SpringProperties`>> mechanism.
 =====
 
 The <<testcontext-framework>> honors `@NestedTestConfiguration` semantics for the
@@ -4565,8 +4564,8 @@ The size of the context cache is bounded with a default maximum size of 32. When
 maximum size is reached, a least recently used (LRU) eviction policy is used to evict and
 close stale contexts. You can configure the maximum size from the command line or a build
 script by setting a JVM system property named `spring.test.context.cache.maxSize`. As an
-alternative, you can set the same property programmatically by using the
-`SpringProperties` API.
+alternative, you can set the same property via the
+<<appendix.adoc#appendix-spring-properties,`SpringProperties`>> mechanism.
 
 Since having a large number of application contexts loaded within a given test suite can
 cause the suite to take an unnecessarily long time to run, it is often beneficial to
@@ -4583,6 +4582,52 @@ the application context before running the next test that requires the same appl
 context. Note that support for the `@DirtiesContext` annotation is provided by the
 `DirtiesContextBeforeModesTestExecutionListener` and the
 `DirtiesContextTestExecutionListener`, which are enabled by default.
+
+.ApplicationContext lifecycle and console logging
+[NOTE]
+====
+When you need to debug a test executed with the Spring TestContext Framework, it can be
+useful to analyze the console output (that is, output to the `SYSOUT` and `SYSERR`
+streams). Some build tools and IDEs are able to associate console output with a given
+test; however, some console output cannot be easily associated with a given test.
+
+With regard to console logging triggered by the Spring Framework itself or by components
+registered in the `ApplicationContext`, it is important to understand the lifecycle of an
+`ApplicationContext` that has been loaded by the Spring TestContext Framework within a
+test suite.
+
+The `ApplicationContext` for a test is typically loaded when an instance of the test
+class is being prepared -- for example, to perform dependency injection into `@Autowired`
+fields of the test instance. This means that any console logging triggered during the
+initialization of the `ApplicationContext` typically cannot be associated with an
+individual test method. However, if the context is closed immediately before the
+execution of a test method according to <<spring-testing-annotation-dirtiescontext>>
+semantics, a new instance of the context will be loaded just prior to execution of the
+test method. In the latter scenario, an IDE or build tool may potentially associate
+console logging with the individual test method.
+
+The `ApplicationContext` for a test can be closed via one of the following scenarios.
+
+* The context is closed according to `@DirtiesContext` semantics.
+* The context is closed because it has been automatically evicted from the cache
+  according to the LRU eviction policy.
+* The context is closed via a JVM shutdown hook when the JVM for the test suite
+  terminates.
+
+If the context is closed according to `@DirtiesContext` semantics after a particular test
+method, an IDE or build tool may potentially associate console logging with the
+individual test method. If the context is closed according to `@DirtiesContext` semantics
+after a test class, any console logging triggered during the shutdown of the
+`ApplicationContext` cannot be associated with an individual test method. Similarly, any
+console logging triggered during the shutdown phase via a JVM shutdown hook cannot be
+associated with an individual test method.
+
+When a Spring `ApplicationContext` is closed via a JVM shutdown hook, callbacks executed
+during the shutdown phase are executed on a thread named `SpringContextShutdownHook`. So,
+if you wish to disable console logging triggered when the `ApplicationContext` is closed
+via a JVM shutdown hook, you may be able to register a custom filter with your logging
+framework that allows you to ignore any logging initiated by that thread.
+====
 
 [[testcontext-ctx-management-ctx-hierarchies]]
 ===== Context Hierarchies
@@ -4954,8 +4999,7 @@ The preceding code listings use the same XML context file referenced by the
 `@ContextConfiguration` annotation (that is, `repository-config.xml`). The following
 shows this configuration:
 
-[source,xml,indent=0]
-[subs="verbatim,quotes"]
+[source,xml,indent=0,subs="verbatim,quotes"]
 ----
 	<?xml version="1.0" encoding="UTF-8"?>
 	<beans xmlns="http://www.springframework.org/schema/beans"
@@ -5116,8 +5160,7 @@ need to configure a theme in the mock session managed by the TestContext framewo
 following example shows how to do so:
 
 .Session-scoped bean configuration
-[source,xml,indent=0]
-[subs="verbatim,quotes"]
+[source,xml,indent=0,subs="verbatim,quotes"]
 ----
 	<beans>
 
@@ -7047,6 +7090,8 @@ To perform requests that use any HTTP method, as the following example shows:
 [source,java,indent=0,subs="verbatim,quotes",role="primary"]
 .Java
 ----
+	// static import of MockMvcRequestBuilders.*
+
 	mockMvc.perform(post("/hotels/{id}", 42).accept(MediaType.APPLICATION_JSON));
 ----
 
@@ -7178,6 +7223,8 @@ performing a request, as the following example shows:
 [source,java,indent=0,subs="verbatim,quotes",role="primary"]
 .Java
 ----
+	// static import of MockMvcRequestBuilders.* and MockMvcResultMatchers.*
+
 	mockMvc.perform(get("/accounts/1")).andExpect(status().isOk());
 ----
 
@@ -7371,6 +7418,8 @@ or reactive type such as Reactor `Mono`:
 [source,java,indent=0,subs="verbatim,quotes",role="primary"]
 .Java
 ----
+	// static import of MockMvcRequestBuilders.* and MockMvcResultMatchers.*
+
 	@Test
 	void test() throws Exception {
         MvcResult mvcResult = this.mockMvc.perform(get("/path"))
@@ -7420,12 +7469,35 @@ or reactive type such as Reactor `Mono`:
 [[spring-mvc-test-vs-streaming-response]]
 ===== Streaming Responses
 
-There are no options built into Spring MVC Test for container-less testing of streaming
-responses. However you can test streaming requests through the <<WebTestClient>>.
-This is also supported in Spring Boot where you can
-{doc-spring-boot}/html/spring-boot-features.html#boot-features-testing-spring-boot-applications-testing-with-running-server[test a running server]
-with `WebTestClient`. One extra advantage is the ability to use the `StepVerifier` from
-project Reactor that allows declaring expectations on a stream of data.
+The best way to test streaming responses such as Server-Sent Events is through the
+<<WebTestClient>> which can be used as a test client to connect to a `MockMvc` instance
+to perform tests on Spring MVC controllers without a running server. For example:
+
+[source,java,indent=0,subs="verbatim,quotes",role="primary"]
+.Java
+----
+	WebTestClient client = MockMvcWebTestClient.bindToController(new SseController()).build();
+
+	FluxExchangeResult<Person> exchangeResult = client.get()
+			.uri("/persons")
+			.exchange()
+			.expectStatus().isOk()
+			.expectHeader().contentType("text/event-stream")
+			.returnResult(Person.class);
+
+	// Use StepVerifier from Project Reactor to test the streaming response
+
+	StepVerifier.create(exchangeResult.getResponseBody())
+			.expectNext(new Person("N0"), new Person("N1"), new Person("N2"))
+			.expectNextCount(4)
+			.consumeNextWith(person -> assertThat(person.getName()).endsWith("7"))
+			.thenCancel()
+			.verify();
+----
+
+`WebTestClient` can also connect to a live server and perform full end-to-end integration
+tests. This is also supported in Spring Boot where you can
+{doc-spring-boot}/html/spring-boot-features.html#boot-features-testing-spring-boot-applications-testing-with-running-server[test a running server].
 
 
 [[spring-mvc-test-server-filters]]
@@ -7499,9 +7571,9 @@ of testing even within the same project.
 ===== Further Examples
 
 The framework's own tests include
-https://github.com/spring-projects/spring-framework/tree/master/spring-test/src/test/java/org/springframework/test/web/servlet/samples[
+{spring-framework-main-code}/spring-test/src/test/java/org/springframework/test/web/servlet/samples[
 many sample tests] intended to show how to use MockMvc on its own or through the
-https://github.com/spring-projects/spring-framework/tree/master/spring-test/src/test/java/org/springframework/test/web/servlet/samples/client[
+{spring-framework-main-code}/spring-test/src/test/java/org/springframework/test/web/servlet/samples/client[
 WebTestClient]. Browse these examples for further ideas.
 
 
@@ -8710,7 +8782,7 @@ configuration. Check for the support for code completion on static members.
 ==== Further Examples of Client-side REST Tests
 
 Spring MVC Test's own tests include
-https://github.com/spring-projects/spring-framework/tree/master/spring-test/src/test/java/org/springframework/test/web/client/samples[example
+{spring-framework-main-code}/spring-test/src/test/java/org/springframework/test/web/client/samples[example
 tests] of client-side REST tests.
 
 
