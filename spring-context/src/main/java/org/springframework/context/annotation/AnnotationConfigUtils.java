@@ -231,10 +231,12 @@ public abstract class AnnotationConfigUtils {
 	}
 
 	public static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd) {
+		//AnnotatedGenericBeanDefinition  StandardAnnotationMetadata
 		processCommonDefinitionAnnotations(abd, abd.getMetadata());
 	}
 
 	static void processCommonDefinitionAnnotations(AnnotatedBeanDefinition abd, AnnotatedTypeMetadata metadata) {
+		//是否标记了 @Lazy,查找的过程涉及嵌套的注解吗？
 		AnnotationAttributes lazy = attributesFor(metadata, Lazy.class);
 		if (lazy != null) {
 			abd.setLazyInit(lazy.getBoolean("value"));
@@ -249,6 +251,7 @@ public abstract class AnnotationConfigUtils {
 		if (metadata.isAnnotated(Primary.class.getName())) {
 			abd.setPrimary(true);
 		}
+		//整个注解链上是否标注了 @DependsOn
 		AnnotationAttributes dependsOn = attributesFor(metadata, DependsOn.class);
 		if (dependsOn != null) {
 			abd.setDependsOn(dependsOn.getStringArray("value"));

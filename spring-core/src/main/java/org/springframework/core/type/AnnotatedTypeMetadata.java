@@ -97,7 +97,7 @@ public interface AnnotatedTypeMetadata {
 	@Nullable
 	default Map<String, Object> getAnnotationAttributes(String annotationName,
 			boolean classValuesAsString) {
-
+		//getAnnotations()=TypeMappedAnnotations
 		MergedAnnotation<Annotation> annotation = getAnnotations().get(annotationName,
 				null, MergedAnnotationSelectors.firstDirectlyDeclared());
 		if (!annotation.isPresent()) {

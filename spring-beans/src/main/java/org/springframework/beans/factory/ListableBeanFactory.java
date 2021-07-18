@@ -239,11 +239,14 @@ public interface ListableBeanFactory extends BeanFactory {
 	 * @param type the class or interface to match, or {@code null} for all bean names
 	 * @param includeNonSingletons whether to include prototype or scoped beans too
 	 * or just singletons (also applies to FactoryBeans)
+	 *                       是包含非单例？
 	 * @param allowEagerInit whether to initialize <i>lazy-init singletons</i> and
 	 * <i>objects created by FactoryBeans</i> (or by factory methods with a
 	 * "factory-bean" reference) for the type check. Note that FactoryBeans need to be
 	 * eagerly initialized to determine their type: So be aware that passing in "true"
 	 * for this flag will initialize FactoryBeans and "factory-bean" references.
+	 *                       是否要初始化 延迟加载的单例 或者 FactoryBean
+	 *                       对于FactoryBean 需要初始化才能确定其内包含对象的类型
 	 * @return the names of beans (or objects created by FactoryBeans) matching
 	 * the given object type (including subclasses), or an empty array if none
 	 * @see FactoryBean#getObjectType

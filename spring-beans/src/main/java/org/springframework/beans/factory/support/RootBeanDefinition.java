@@ -46,6 +46,9 @@ import org.springframework.util.Assert;
  * GenericBeanDefinition has the advantage that it allows to dynamically define
  * parent dependencies, not 'hard-coding' the role as a root bean definition.
  *
+ * root bd 代表是merged 后的，那现在用的多吗？
+ * Spring2.5之后，推荐的编程式注入bd 是 GenericBeanDefinition
+ *
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @see GenericBeanDefinition

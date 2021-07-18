@@ -589,11 +589,14 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 						boolean isFactoryBean = isFactoryBean(beanName, mbd);
 						BeanDefinitionHolder dbd = mbd.getDecoratedDefinition();
 						boolean matchFound = false;
+						//是否允许 FactoryBean 初始化？
 						boolean allowFactoryBeanInit = (allowEagerInit || containsSingleton(beanName));
 						boolean isNonLazyDecorated = (dbd != null && !mbd.isLazyInit());
 						if (!isFactoryBean) {
+							//不是 FactoryBean
 							if (includeNonSingletons || isSingleton(beanName, mbd, dbd)) {
 								//RequestMappingHandlerMapping false
+								//是否符合要查找的类型
 								matchFound = isTypeMatch(beanName, type, allowFactoryBeanInit);
 							}
 						}

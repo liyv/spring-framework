@@ -73,6 +73,8 @@ import org.springframework.util.xml.DomUtils;
  * {@link BeanDefinitionParser BeanDefinitionParsers} or
  * {@link BeanDefinitionDecorator BeanDefinitionDecorators}.
  *
+ * 解析XML定义的bd
+ *
  * @author Rob Harrop
  * @author Juergen Hoeller
  * @author Rod Johnson

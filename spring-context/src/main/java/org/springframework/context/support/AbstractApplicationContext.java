@@ -664,6 +664,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Store pre-refresh ApplicationListeners...
 		if (this.earlyApplicationListeners == null) {
+			//14个监听器
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		}
 		else {
@@ -693,6 +694,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		//spring-boot 走的是 GenericApplicationContext
 		refreshBeanFactory();
 		return getBeanFactory();
 	}
@@ -714,8 +716,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		//this: XmlWebApplicationContext
 		// Configure the bean factory with context callbacks.
+		// 添加 BeanPostProcessor
 		beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 		//忽略给定接口的自动装配？通过其他途径装配
+		//将这些接口记录下来 ignoredDependencyInterfaces
 		beanFactory.ignoreDependencyInterface(EnvironmentAware.class);
 		beanFactory.ignoreDependencyInterface(EmbeddedValueResolverAware.class);
 		beanFactory.ignoreDependencyInterface(ResourceLoaderAware.class);
@@ -727,6 +731,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// BeanFactory interface not registered as resolvable type in a plain factory.
 		// MessageSource registered (and found for autowiring) as a bean.
 		//为特定的类型指定注入的实例类型？
+		//对这些类型进行注入时，使用这个对象
 		beanFactory.registerResolvableDependency(BeanFactory.class, beanFactory);
 		beanFactory.registerResolvableDependency(ResourceLoader.class, this);
 		beanFactory.registerResolvableDependency(ApplicationEventPublisher.class, this);
@@ -780,6 +785,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
 		//getBeanFactoryPostProcessors()= List<BeanFactoryPostProcessor> 有多少个呢？ 0个
 		//主要是 BeanDefinitionRegistryPostProcessor 和 BeanFactoryPostProcessor
+		//对于spring-boot getBeanFactoryPostProcessors()有2个 1. CachingMetadataReaderFactoryPostProcessor 2. ConfigurationWarningsPostProcessor
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime

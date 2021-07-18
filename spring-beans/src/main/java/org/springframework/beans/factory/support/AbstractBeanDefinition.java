@@ -58,6 +58,15 @@ import org.springframework.util.StringUtils;
 @SuppressWarnings("serial")
 public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccessor
 		implements BeanDefinition, Cloneable {
+	//子类有哪些
+	//    GenericBeanDefinition
+	//      AnnotatedGenericBeanDefinition
+	//      ScannedGenericBeanDefinition
+	//    ChildBeanDefinition
+	//    RootBeanDefinition
+	//      ClassDerivedBeanDefinition
+	//      ConfigurationClassBeanDefinition
+
 
 	/**
 	 * Constant for the default scope name: {@code ""}, equivalent to singleton
@@ -137,20 +146,20 @@ public abstract class AbstractBeanDefinition extends BeanMetadataAttributeAccess
 	 */
 	public static final String INFER_METHOD = "(inferred)";
 
-
+	//bean 的全限定类名
 	@Nullable
 	private volatile Object beanClass;
-
+	//默认的作用域为单实例
 	@Nullable
 	private String scope = SCOPE_DEFAULT;
-
+	//默认bean 不是抽象的
 	private boolean abstractFlag = false;
-
+	//是否延迟初始化
 	@Nullable
 	private Boolean lazyInit;
-
+	//自动注入模式(默认不开启自动注入)
 	private int autowireMode = AUTOWIRE_NO;
-
+	//
 	private int dependencyCheck = DEPENDENCY_CHECK_NONE;
 
 	@Nullable

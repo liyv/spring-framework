@@ -41,6 +41,8 @@ import org.springframework.util.Assert;
  * <p>Processing of Spring Advisors follows the rules established in
  * {@link org.springframework.aop.framework.autoproxy.AbstractAdvisorAutoProxyCreator}.
  *
+ * Advisor 是什么东西
+ *
  * @author Rod Johnson
  * @author Juergen Hoeller
  * @since 2.0

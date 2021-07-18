@@ -278,7 +278,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object beanInstance;
 
 		// Eagerly check singleton cache for manually registered singletons.
-		//尝试从缓存中获取
+		//尝试从缓存中获取，手动注册的单例
 		//根据 beanName 我们取到的可能是 FactoryBean 也可能是 bean
 		Object sharedInstance = getSingleton(beanName);
 		if (sharedInstance != null && args == null) {
@@ -334,7 +334,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					beanCreation.tag("beanType", requiredType::toString);
 				}
 				RootBeanDefinition mbd = getMergedLocalBeanDefinition(beanName);
-				//验证
+				//验证 当前的 beanDefinition 是否是抽象类的
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
@@ -572,6 +572,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		String beanName = transformedBeanName(name);
 		//mvcContentNegotiationManager false
+		//是否是查找 FactoryBean 本身
 		boolean isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name);
 
 		// Check manually registered singletons.
@@ -1380,7 +1381,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 */
 	protected RootBeanDefinition getMergedLocalBeanDefinition(String beanName) throws BeansException {
 		// Quick check on the concurrent map first, with minimal locking.
-		//这里应该是起到一个缓存作用
+		//这里应该是起到一个缓存作用 缓存了合并的 beanDefinition
 		RootBeanDefinition mbd = this.mergedBeanDefinitions.get(beanName);
 		if (mbd != null && !mbd.stale) {
 			return mbd;
@@ -1426,6 +1427,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			if (mbd == null || mbd.stale) {
+				//从下往上 还是从上往下？
 				previous = mbd;
 				//判断 bd是否没有父bd，
 				//即独立的 GenericBeanDefinition 或者 RootBeanDefinition
@@ -1719,6 +1721,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	protected boolean isFactoryBean(String beanName, RootBeanDefinition mbd) {
 		Boolean result = mbd.isFactoryBean;
 		if (result == null) {
+			//这里是提前预测 bean的类型？
 			Class<?> beanType = predictBeanType(beanName, mbd, FactoryBean.class);
 			result = (beanType != null && FactoryBean.class.isAssignableFrom(beanType));
 			mbd.isFactoryBean = result;
@@ -1831,6 +1834,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				if (!this.alreadyCreated.contains(beanName)) {
 					// Let the bean definition get re-merged now that we're actually creating
 					// the bean... just in case some of its metadata changed in the meantime.
+					//数据还会变吗？
 					clearMergedBeanDefinition(beanName);
 					this.alreadyCreated.add(beanName);
 				}

@@ -192,13 +192,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param singletonFactory the factory for the singleton object
 	 */
 	protected void addSingletonFactory(String beanName, ObjectFactory<?> singletonFactory) {
+		//这个方法是在 doCreateBean() 在对象已经被实例化(但还没有初始化)后调用的
 		Assert.notNull(singletonFactory, "Singleton factory must not be null");
 		synchronized (this.singletonObjects) {
 			//没有把 beanName 放到 singletonObjects 中
 			if (!this.singletonObjects.containsKey(beanName)) {
-				//加入三级缓存
+				//一级缓存中还没有
+				//加入三级缓存，这个 singletonFactory 是 ObjectFactory ，逻辑上它可以对返回的对象做任何处理，比如生成一个代理对象返回
 				this.singletonFactories.put(beanName, singletonFactory);
-				//earlySingletonObjects 是什么时候放进去的？此处为何要移除掉？？？移除二级缓存
+				//earlySingletonObjects 是什么时候放进去的？从一级缓存实例化后放进去的，此处为何要移除掉？？？移除二级缓存
 				this.earlySingletonObjects.remove(beanName);
 				//这个的作用又是什么呢？？？
 				this.registeredSingletons.add(beanName);
@@ -218,25 +220,35 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * reference to a currently created singleton (resolving a circular reference).
 	 * @param beanName the name of the bean to look for
 	 * @param allowEarlyReference whether early references should be created or not
+	 *                            是否创建对象，提前暴露，此对象还不是完全体，只能从三级缓存的工厂来创建
+	 *                            todo:三级缓存和这里有什么联系呢？
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
 	@Nullable
 	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		// Quick check for existing instance without full singleton lock
+		//取完全体的bean对象
 		Object singletonObject = this.singletonObjects.get(beanName);
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
+			//当前Bean正在创建的过程中
+			//从二级缓存中取，这里的对象是只调用过构造方法，还未初始化吗？
 			singletonObject = this.earlySingletonObjects.get(beanName);
 			if (singletonObject == null && allowEarlyReference) {
+				//二级缓存中也没有，允许提前引用？
 				synchronized (this.singletonObjects) {
 					// Consistent creation of early reference within full singleton lock
 					singletonObject = this.singletonObjects.get(beanName);
 					if (singletonObject == null) {
 						singletonObject = this.earlySingletonObjects.get(beanName);
 						if (singletonObject == null) {
+							//调用对象构造工厂，这些工厂是怎么时候放进去的？
 							ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
 							if (singletonFactory != null) {
+								//从对象工厂获取实例
 								singletonObject = singletonFactory.getObject();
+								//将其放到二级缓存中
 								this.earlySingletonObjects.put(beanName, singletonObject);
+								//将对象工厂移除掉
 								this.singletonFactories.remove(beanName);
 							}
 						}
@@ -258,7 +270,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	public Object getSingleton(String beanName, ObjectFactory<?> singletonFactory) {
 		Assert.notNull(beanName, "Bean name must not be null");
 		synchronized (this.singletonObjects) {
-			//查缓存
+			//再次查缓存
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
 				if (this.singletonsCurrentlyInDestruction) {
@@ -277,6 +289,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//调用 createBean
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -304,7 +317,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					afterSingletonCreation(beanName);
 				}
 				if (newSingleton) {
-					//新的单例，添加到一级缓存中
+					//新的单例，添加到一级缓存中 这个对象是完全体的
 					addSingleton(beanName, singletonObject);
 				}
 			}

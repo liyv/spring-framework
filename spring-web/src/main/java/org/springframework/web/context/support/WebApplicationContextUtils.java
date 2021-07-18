@@ -168,6 +168,7 @@ public abstract class WebApplicationContextUtils {
 	/**
 	 * Register web-specific scopes ("request", "session", "globalSession")
 	 * with the given BeanFactory, as used by the WebApplicationContext.
+	 * spring-boot 有用到
 	 * @param beanFactory the BeanFactory to configure
 	 */
 	public static void registerWebApplicationScopes(ConfigurableListableBeanFactory beanFactory) {

@@ -82,6 +82,8 @@ import org.springframework.util.ClassUtils;
  * their corresponding bean definitions registered before any other
  * {@code BeanFactoryPostProcessor} executes.
  *
+ * 解析 配置类 + @Bean 定义的bd
+ *
  * @author Chris Beams
  * @author Juergen Hoeller
  * @author Phillip Webb
@@ -330,6 +332,12 @@ public class ConfigurationClassPostProcessor implements BeanDefinitionRegistryPo
 		}
 
 		// Parse each @Configuration class
+		//metadataReaderFactory = CachingMetadataReaderFactory
+		//problemReporter = FailFastProblemReporter
+		//spring-boot environment = ApplicationServletEnvironment
+		//spring-boot resourceLoader = AnnotationConfigServletWebServerApplicationContext
+		//componentScanBeanNameGenerator=AnnotationBeanNameGenerator
+		//registry = DefaultListableBeanFactory
 		ConfigurationClassParser parser = new ConfigurationClassParser(
 				this.metadataReaderFactory, this.problemReporter, this.environment,
 				this.resourceLoader, this.componentScanBeanNameGenerator, registry);

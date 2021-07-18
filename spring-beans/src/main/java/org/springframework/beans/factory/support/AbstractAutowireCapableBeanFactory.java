@@ -571,6 +571,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		BeanWrapper instanceWrapper = null;
 		if (mbd.isSingleton()) {
 			//factoryBeanInstanceCache 存放的是 factoryBean 的实例吗
+			//为什么要移除掉呢？
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);
 		}
 		if (instanceWrapper == null) {
@@ -583,6 +584,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		//Bean 的类型
 		Class<?> beanType = instanceWrapper.getWrappedClass();
 		if (beanType != NullBean.class) {
+			//beanDefinition 设置这个值，后面还会用到吗？
 			mbd.resolvedTargetType = beanType;
 		}
 
@@ -624,13 +626,15 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			//AOP 是如何实现的？？？
 			//看到了几层缓存？？？
 			//CGLib 是在哪个阶段起作用的？@Configuration 注解的类为什么会生成代理类
+			//这个 bean 是调用的构造方法实例出来的
 			addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
 		}
 
 		// Initialize the bean instance.
+		//这里应该还是原对象吧
 		Object exposedObject = bean;
 		try {
-			//填充Bean吗？？？
+			//填充Bean吗？？？给字段赋值
 			populateBean(beanName, mbd, instanceWrapper);
 			//initializeBean会调用后置处理器
 			//populateBean 和 initializeBean 的区别是什么？？？ 是调用初始化方法吗？
@@ -646,13 +650,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 						mbd.getResourceDescription(), beanName, "Initialization of bean failed", ex);
 			}
 		}
-
+		//提前暴露单例对象引用
 		if (earlySingletonExposure) {
 			//从一级、二级缓存中取
+			// 这是在创建对象的过程中额，怎么会可能是代理对象呢？被别的入口调用了，前面已经暴露出去了
 			Object earlySingletonReference = getSingleton(beanName, false);
 			if (earlySingletonReference != null) {
 				//因为后置处理器的原因，此处 exposedObject 可能会是一个代理对象 所以 != bean
-				//哪个地方的后置处理器？
+				//哪个地方的后置处理器？ InstantiationAwareBeanPostProcessor
 				//在 initializeBean--> applyBeanPostProcessorsAfterInitialization 有机会返回不同的bean
 				if (exposedObject == bean) {
 					exposedObject = earlySingletonReference;
@@ -1014,6 +1019,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
 			// SmartInstantiationAwareBeanPostProcessor 的作用是什么呢
 			for (SmartInstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().smartInstantiationAware) {
+				//这里是返回代理对象吗？
 				exposedObject = bp.getEarlyBeanReference(exposedObject, beanName);
 			}
 		}
@@ -1261,6 +1267,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		//从 BeanPostProcessor 中也能得到构造方法？这是什么操作？
 		//默认的实现是返回 null
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
+		//现在大都没有自动注入了吧
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
 				mbd.hasConstructorArgumentValues() || !ObjectUtils.isEmpty(args)) {
 			return autowireConstructor(beanName, mbd, ctors, args);
@@ -1458,7 +1465,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		int resolvedAutowireMode = mbd.getResolvedAutowireMode();
 		//自动装备模式：名称或者类型
 		//自动装备应该是不推荐了吧？？？
-		//此处应该可以理解自动装备
+		//此处应该可以理解自动装备，现在大多不使用自动注入了
 		if (resolvedAutowireMode == AUTOWIRE_BY_NAME || resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
 			MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
 			// Add property values based on autowire by name if applicable.
@@ -1475,13 +1482,14 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		boolean hasInstAwareBpps = hasInstantiationAwareBeanPostProcessors();
 		//依赖检查吗？
 		boolean needsDepCheck = (mbd.getDependencyCheck() != AbstractBeanDefinition.DEPENDENCY_CHECK_NONE);
-
+		//这下面都是处理 PropertyValues 的？
 		PropertyDescriptor[] filteredPds = null;
 		if (hasInstAwareBpps) {
 			if (pvs == null) {
 				pvs = mbd.getPropertyValues();
 			}
 			for (InstantiationAwareBeanPostProcessor bp : getBeanPostProcessorCache().instantiationAware) {
+				// InstantiationAwareBeanPostProcessor 来处理 PropertyValues
 				PropertyValues pvsToUse = bp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
 				if (pvsToUse == null) {
 					if (filteredPds == null) {
@@ -1842,15 +1850,18 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}, getAccessControlContext());
 		}
 		else {
+			//调用回调
 			invokeAwareMethods(beanName, bean);
 		}
 
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
+			//调用 BeanPostProcessor
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
 
 		try {
+			//调用初始化方法
 			invokeInitMethods(beanName, wrappedBean, mbd);
 		}
 		catch (Throwable ex) {
@@ -1859,12 +1870,13 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 					beanName, "Invocation of init method failed", ex);
 		}
 		if (mbd == null || !mbd.isSynthetic()) {
+			//再次调用 BeanPostProcessor
 			wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
 		}
 
 		return wrappedBean;
 	}
-
+	//这里是调用那些回调函数？还有其他的回调呢
 	private void invokeAwareMethods(String beanName, Object bean) {
 		if (bean instanceof Aware) {
 			if (bean instanceof BeanNameAware) {
