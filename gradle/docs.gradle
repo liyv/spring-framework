@@ -103,9 +103,12 @@ dokka {
 		externalDocumentationLink {
 			url = new URL("https://www.reactive-streams.org/reactive-streams-1.0.1-javadoc/")
 		}
+/*
+		This link causes errors, removing to fix the build.
 		externalDocumentationLink {
 			url = new URL("https://kotlin.github.io/kotlinx.coroutines/kotlinx-coroutines-core/")
 		}
+*/
 		externalDocumentationLink {
 			url = new URL("https://r2dbc.io/spec/0.8.3.RELEASE/api/")
 		}
@@ -136,7 +139,7 @@ asciidoctorj {
 			icons: 'font',
 			idprefix: '',
 			idseparator: '-',
-			docinfo: 'shared',
+			docinfo: 'shared,private-header', // https://docs.asciidoctor.org/asciidoctor/latest/docinfo/
 			revnumber: project.version,
 			sectanchors: '',
 			sectnums: '',
@@ -160,9 +163,6 @@ asciidoctorj {
 asciidoctor {
 	baseDirFollowsSourceDir()
 	configurations 'asciidoctorExt'
-	attributes([
-			noheader: '' // custom header in docinfo-header.html
-	])
 	sources {
 		include '*.adoc'
 	}
